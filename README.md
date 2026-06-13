@@ -154,3 +154,4 @@ Linkon Browser is built on open-source components:
 - OpenHands: MIT License
 - Ollama: MIT License
 - Linkon Layer: TeraBites © 2025 — All rights reserved
+# Linkon Browser — Three Platform Build
