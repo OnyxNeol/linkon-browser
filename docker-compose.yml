@@ -1,0 +1,101 @@
+# ============================================================
+# Linkon Backend Services
+# Run: docker-compose up -d
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  # ── Stract — Open-source search engine (no Google) ────────
+  stract:
+    image: ghcr.io/stractorg/stract:latest
+    container_name: linkon-stract
+    ports:
+      - "3000:3000"
+    volumes:
+      - stract-data:/data
+      - ./stract-config/stract.toml:/app/config.toml:ro
+    environment:
+      - STRACT_CONFIG=/app/config.toml
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── OpenHands — Open-source AI agent (no OpenAI required) ─
+  openhands:
+    image: ghcr.io/all-hands-ai/openhands:latest
+    container_name: linkon-openhands
+    ports:
+      - "3001:3000"
+    volumes:
+      - openhands-data:/root/.openhands
+      - /var/run/docker.sock:/var/run/docker.sock   # for sandbox containers
+      - ./workspaces:/workspaces
+    environment:
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=ghcr.io/all-hands-ai/runtime:latest
+      - LOG_ALL_EVENTS=true
+      # Use local Ollama — NO external API key needed
+      - LLM_MODEL=ollama/codellama:13b
+      - LLM_BASE_URL=http://host.docker.internal:11434
+      - LLM_API_KEY=ollama
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── Ollama — Local LLM runner (no cloud, no API key) ──────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: linkon-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    # Uncomment for GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Model puller — downloads CodeLlama on first run ───────
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: linkon-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        ollama pull codellama:13b &&
+        ollama pull nomic-embed-text &&
+        echo 'Models ready!'
+      "
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    restart: "no"
+
+volumes:
+  stract-data:
+  openhands-data:
+  ollama-models:
+
+networks:
+  default:
+    name: linkon-network

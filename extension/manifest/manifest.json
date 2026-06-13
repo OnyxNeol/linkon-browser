@@ -1,0 +1,77 @@
+{
+  "manifest_version": 3,
+  "name": "Linkon Core",
+  "version": "1.0.0",
+  "description": "Linkon Browser OS — Five Pillars Extension Layer",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "linkon-core@linkon.browser",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "tabs",
+    "tabHide",
+    "sessions",
+    "storage",
+    "unlimitedStorage",
+    "nativeMessaging",
+    "scripting",
+    "webRequest",
+    "webRequestBlocking",
+    "bookmarks",
+    "history",
+    "downloads",
+    "notifications",
+    "alarms",
+    "idle",
+    "management",
+    "activeTab",
+    "contextMenus",
+    "sidebarAction"
+  ],
+  "host_permissions": [
+    "<all_urls>",
+    "http://localhost:7700/*",
+    "http://localhost:11434/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "scripts": ["src/background.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/panels/popup.html",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "sidebar_action": {
+    "default_panel": "src/panels/sidebar.html",
+    "default_title": "Linkon",
+    "default_icon": "assets/icon48.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "src/universe/universe.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "src/panels/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  }
+}

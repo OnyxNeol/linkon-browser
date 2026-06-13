@@ -1,0 +1,50 @@
+# ============================================================
+# Stract Search Engine Configuration for Linkon Browser
+# Stract: https://github.com/StractOrg/stract
+# ============================================================
+
+[searcher]
+host = "0.0.0.0"
+port = 3000
+
+[index]
+path = "/data/index"
+
+[crawler]
+num_threads = 4
+user_agent = "LinkonBot/1.0 (https://linkon.browser/bot)"
+# Seed URLs for crawling — dev-focused sources
+seed_urls = [
+  "https://developer.mozilla.org",
+  "https://docs.python.org",
+  "https://doc.rust-lang.org",
+  "https://nodejs.org/docs",
+  "https://go.dev/doc",
+  "https://docs.github.com",
+  "https://huggingface.co/docs",
+  "https://kaggle.com",
+  "https://stackoverflow.com",
+  "https://arxiv.org",
+  "https://wikipedia.org",
+  "https://crates.io",
+  "https://npmjs.com",
+  "https://pypi.org"
+]
+
+[ranking]
+# No Google-style SEO spam — developer-focused signals
+num_results = 10
+boost_exact_title_match = true
+
+[spell_check]
+enabled = true
+
+[summarizer]
+# Local summarizer — no external API
+enabled = false   # set true when Ollama is running
+
+[cors]
+allowed_origins = [
+  "moz-extension://",
+  "http://localhost"
+]

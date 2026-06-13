@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linkon Universe</title>
+  <link rel="stylesheet" href="universe.css" />
+</head>
+<body>
+  <!-- Starfield canvas -->
+  <canvas id="starfield"></canvas>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="linkon-logo">
+        <div class="logo-ring ring1"></div>
+        <div class="logo-ring ring2"></div>
+        <div class="logo-ring ring3"></div>
+        <span class="logo-text">⬡ LINKON</span>
+      </div>
+      <h1 class="login-title">Enter Your Universe</h1>
+      <p class="login-sub">Powered by <strong>Linkon Pass</strong> · TeraBites Auth</p>
+      <form id="login-form" class="login-form">
+        <div class="input-group">
+          <span class="input-icon">👤</span>
+          <input type="text" id="username" placeholder="Username" autocomplete="username" required />
+        </div>
+        <div class="input-group">
+          <span class="input-icon">🔑</span>
+          <input type="password" id="password" placeholder="Linkon Pass" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn-launch" id="login-btn">
+          <span class="btn-text">LAUNCH INTO UNIVERSE</span>
+          <span class="btn-glow"></span>
+        </button>
+      </form>
+      <div id="login-status" class="login-status"></div>
+    </div>
+  </div>
+
+  <!-- Entering animation -->
+  <div id="entering-screen" class="screen">
+    <div class="entering-container">
+      <div class="portal-ring"></div>
+      <div class="entering-text" id="entering-text">Entering Universe…</div>
+      <div class="entering-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- Main Universe Dashboard -->
+  <div id="universe-screen" class="screen">
+    <!-- Top Nav -->
+    <nav class="topnav">
+      <div class="nav-left">
+        <span class="nav-logo">⬡ LINKON</span>
+        <div class="search-bar">
+          <span>🔍</span>
+          <input type="text" id="search-input" placeholder="Search with Stract…" />
+          <kbd>⌘K</kbd>
+        </div>
+      </div>
+      <div class="nav-center">
+        <span class="universe-name" id="universe-name-display">—-Linkon-Universe</span>
+      </div>
+      <div class="nav-right">
+        <button class="nav-btn" id="btn-tabs" title="Infinite Tabs">
+          <span>⧉</span><span class="badge" id="tabs-count">0</span>
+        </button>
+        <button class="nav-btn" id="btn-agents" title="Agents">
+          <span>🤖</span><span class="badge" id="agents-count">0</span>
+        </button>
+        <button class="nav-btn" id="btn-sgallery" title="S Gallery™">
+          <span>⚗️</span><span class="tb-badge">TB™</span>
+        </button>
+        <div class="avatar" id="user-avatar">?</div>
+      </div>
+    </nav>
+
+    <!-- Layout -->
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="workspace-header">
+          <span class="workspace-icon">🌐</span>
+          <span class="workspace-name" id="workspace-name" contenteditable="true">My Workspace</span>
+          <button class="edit-btn" title="Rename">✏️</button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-label">GALAXIES</div>
+          <ul id="galaxy-list" class="galaxy-list"></ul>
+          <button class="btn-new-galaxy" id="btn-new-galaxy">+ New Galaxy</button>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-label">QUICK LINKS</div>
+          <ul class="quick-links">
+            <li><a href="https://github.com" class="ql-item">🐙 GitHub</a></li>
+            <li><a href="https://huggingface.co" class="ql-item">🤗 Hugging Face</a></li>
+            <li><a href="https://kaggle.com" class="ql-item">📊 Kaggle</a></li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <div class="content-header">
+          <h2 id="current-galaxy-title">All Galaxies</h2>
+          <div class="content-actions">
+            <button class="btn-secondary" id="btn-drop-item">+ Drop Item</button>
+          </div>
+        </div>
+
+        <!-- Galaxy Grid -->
+        <div id="galaxy-grid" class="galaxy-grid"></div>
+
+        <!-- Quick Drop Zone -->
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-icon">🌌</div>
+          <div class="drop-label">Drop items directly into your Universe</div>
+          <div class="drop-sub">Files, links, notes, repos — store now, organize later</div>
+          <div id="immediate-items" class="immediate-items"></div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Stats Bar -->
+    <footer class="stats-bar">
+      <span>🌌 <strong id="stat-galaxies">0</strong> Galaxies</span>
+      <span>📦 <strong id="stat-items">0</strong> Items</span>
+      <span>❄️ <strong id="stat-frozen">0</strong> Frozen Tabs</span>
+      <span>⚡ <strong id="stat-haw">0</strong> HAW Active</span>
+      <span class="stract-status">🔍 Stract: <span id="stract-status">checking…</span></span>
+      <span class="agent-status">🤖 OpenHands: <span id="openhands-status">checking…</span></span>
+    </footer>
+  </div>
+
+  <!-- ── Panels (overlays) ────────────────────────────── -->
+
+  <!-- Tab Manager Panel -->
+  <div id="panel-tabs" class="panel">
+    <div class="panel-header">
+      <span>⧉ Infinite Tabs</span>
+      <button class="panel-close" data-panel="tabs">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="tab-stats">
+        <div class="stat-chip">❄️ <span id="frozen-count">0</span> Frozen</div>
+        <div class="stat-chip">🟢 <span id="haw-count">0</span> HAW</div>
+        <div class="stat-chip">💾 <span id="saved-mb">0</span>MB Saved</div>
+      </div>
+      <div id="tab-list" class="tab-list"></div>
+    </div>
+  </div>
+
+  <!-- S Gallery™ Panel -->
+  <div id="panel-sgallery" class="panel">
+    <div class="panel-header">
+      <span>⚗️ S Gallery™ <span class="tb-badge-inline">TB™</span></span>
+      <button class="panel-close" data-panel="sgallery">✕</button>
+    </div>
+    <div class="panel-body">
+      <div class="section-label">AVAILABLE RUNTIMES</div>
+      <div id="runtime-grid" class="runtime-grid"></div>
+      <div class="section-label" style="margin-top:1.5rem">RUNNING SANDBOXES</div>
+      <div id="sandbox-list" class="sandbox-list"></div>
+    </div>
+  </div>
+
+  <!-- Agents Panel -->
+  <div id="panel-agents" class="panel">
+    <div class="panel-header">
+      <span>🤖 Linkon Agents</span>
+      <button class="panel-close" data-panel="agents">✕</button>
+    </div>
+    <div class="panel-body">
+      <button class="btn-launch-agent" id="btn-launch-agent">+ Launch Agent</button>
+      <div id="agent-list" class="agent-list"></div>
+      <div class="integrations-grid">
+        <div class="integration-card">
+          <span>🐙</span><strong>GitHub</strong>
+          <button class="btn-connect" id="connect-github">Connect</button>
+        </div>
+        <div class="integration-card">
+          <span>🤗</span><strong>Hugging Face</strong>
+          <button class="btn-connect" id="connect-hf">Connect</button>
+        </div>
+        <div class="integration-card">
+          <span>📊</span><strong>Kaggle</strong>
+          <button class="btn-connect" id="connect-kaggle">Connect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Offline AI Copilot (floating) -->
+  <div id="ai-copilot" class="ai-copilot collapsed">
+    <div class="copilot-header" id="copilot-toggle">
+      <span>🧠 AI Copilot</span>
+      <div class="offline-badge">● OFFLINE</div>
+      <span class="copilot-chevron">▲</span>
+    </div>
+    <div class="copilot-body">
+      <div id="copilot-messages" class="copilot-messages"></div>
+      <div class="copilot-quick">
+        <button class="quick-btn" data-prompt="Debug this code">🐛 Debug</button>
+        <button class="quick-btn" data-prompt="Explain this code">💡 Explain</button>
+        <button class="quick-btn" data-prompt="Write a unit test for this">🧪 Test</button>
+      </div>
+      <div class="copilot-input-row">
+        <input type="text" id="copilot-input" placeholder="Ask your offline AI…" />
+        <button id="copilot-send">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Galaxy Modal -->
+  <div id="modal-galaxy" class="modal">
+    <div class="modal-box">
+      <h3>New Galaxy</h3>
+      <input type="text" id="galaxy-name-input" placeholder="Galaxy name…" />
+      <div class="emoji-picker">
+        <span data-icon="🌌">🌌</span><span data-icon="🚀">🚀</span>
+        <span data-icon="📊">📊</span><span data-icon="🔖">🔖</span>
+        <span data-icon="📝">📝</span><span data-icon="⚡">⚡</span>
+        <span data-icon="🔬">🔬</span><span data-icon="🎯">🎯</span>
+        <span data-icon="🌐">🌐</span><span data-icon="🤖">🤖</span>
+      </div>
+      <input type="text" id="galaxy-icon-val" value="🌌" hidden />
+      <div class="modal-actions">
+        <button class="btn-secondary" id="modal-galaxy-cancel">Cancel</button>
+        <button class="btn-launch" id="modal-galaxy-create">Create Galaxy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay backdrop -->
+  <div id="backdrop" class="backdrop"></div>
+
+  <script src="universe.js" type="module"></script>
+</body>
+</html>

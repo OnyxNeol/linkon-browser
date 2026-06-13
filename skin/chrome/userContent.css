@@ -1,0 +1,25 @@
+/* ============================================================
+   Linkon userContent.css
+   Overrides web page styles for Linkon-specific pages
+   ============================================================ */
+
+@namespace url("http://www.w3.org/1999/xhtml");
+
+/* ── about:blank — Linkon-themed ─────────────────────────── */
+@-moz-document url("about:blank") {
+  html, body {
+    background: #0a0014 !important;
+    color: #e0d4ff !important;
+  }
+}
+
+/* ── Stract search results (localhost:3000) ──────────────── */
+@-moz-document url-prefix("http://localhost:3000") {
+  body {
+    background: #0a0014 !important;
+    color: #e0d4ff !important;
+    font-family: 'Segoe UI', system-ui, sans-serif !important;
+  }
+  a { color: #00d4ff !important; }
+  a:visited { color: #8877aa !important; }
+}

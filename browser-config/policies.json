@@ -1,0 +1,107 @@
+{
+  "policies": {
+    "AppUpdateURL": "https://linkon.browser/updates",
+    "BlockAboutConfig": false,
+    "DefaultDownloadDirectory": "${home}/Linkon/Downloads",
+    "DisableFirefoxStudies": true,
+    "DisableTelemetry": true,
+    "DisablePocket": true,
+    "DisableFirefoxAccounts": false,
+    "DisableFormHistory": false,
+    "DisplayBookmarksToolbar": "never",
+    "DisplayMenuBar": "default-off",
+    "DNSOverHTTPS": {
+      "Enabled": true,
+      "ProviderURL": "https://mozilla.cloudflare-dns.com/dns-query",
+      "Locked": false
+    },
+    "EncryptedMediaExtensions": {
+      "Enabled": true,
+      "Locked": false
+    },
+    "Extensions": {
+      "Install": [
+        "linkon-core@linkon.browser"
+      ],
+      "Locked": [
+        "linkon-core@linkon.browser"
+      ]
+    },
+    "FirefoxHome": {
+      "Search": false,
+      "TopSites": false,
+      "SponsoredTopSites": false,
+      "Highlights": false,
+      "Pocket": false,
+      "SponsoredPocket": false,
+      "Snippets": false,
+      "Locked": true
+    },
+    "Homepage": {
+      "URL": "moz-extension://linkon-newtab/universe.html",
+      "Locked": true,
+      "StartPage": "homepage"
+    },
+    "NewTabPage": true,
+    "NoDefaultBookmarks": true,
+    "OfferToSaveLogins": true,
+    "OverrideFirstRunPage": "https://linkon.browser/welcome",
+    "OverridePostUpdatePage": "https://linkon.browser/updated",
+    "PasswordManagerEnabled": true,
+    "PopupBlocking": {
+      "Default": true
+    },
+    "PromptForDownloadLocation": false,
+    "SearchEngines": {
+      "PreventInstalls": false,
+      "Default": "DuckDuckGo",
+      "Remove": [
+        "Google",
+        "Bing",
+        "Amazon.com",
+        "eBay"
+      ],
+      "Add": [
+        {
+          "Name": "Linkon Search",
+          "URLTemplate": "https://duckduckgo.com/?q={searchTerms}&t=linkon",
+          "Method": "GET",
+          "IconURL": "https://linkon.browser/assets/search-icon.png",
+          "Alias": "@linkon",
+          "Description": "Linkon private search — powered by DuckDuckGo",
+          "SuggestURLTemplate": "https://duckduckgo.com/ac/?q={searchTerms}&type=list"
+        },
+        {
+          "Name": "Ecosia",
+          "URLTemplate": "https://www.ecosia.org/search?q={searchTerms}",
+          "Method": "GET",
+          "IconURL": "https://www.ecosia.org/favicon.ico",
+          "Alias": "@eco",
+          "Description": "Ecosia — search and plant trees"
+        },
+        {
+          "Name": "Brave Search",
+          "URLTemplate": "https://search.brave.com/search?q={searchTerms}",
+          "Method": "GET",
+          "IconURL": "https://brave.com/favicon.ico",
+          "Alias": "@brave",
+          "Description": "Brave Search — independent index"
+        }
+      ]
+    },
+    "SupportMenu": {
+      "Title": "Linkon Support",
+      "URL": "https://linkon.browser/support",
+      "AccessKey": "L"
+    },
+    "UserMessaging": {
+      "WhatsNew": false,
+      "ExtensionRecommendations": false,
+      "FeatureRecommendations": false,
+      "UrlbarInterventions": false,
+      "SkipOnboarding": true,
+      "MoreFromMozilla": false,
+      "Locked": true
+    }
+  }
+}

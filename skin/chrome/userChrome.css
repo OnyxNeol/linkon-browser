@@ -1,0 +1,211 @@
+/* ============================================================
+   Linkon Browser — Cosmic Chrome Skin
+   Reskins Firefox's native chrome (toolbar, tabs, urlbar)
+   Enable: user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true)
+   ============================================================ */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+:root {
+  --linkon-void:     #0a0014;
+  --linkon-deep:     #1a0033;
+  --linkon-violet:   #6e00ff;
+  --linkon-cyan:     #00d4ff;
+  --linkon-orange:   #ff6b35;
+  --linkon-text:     #e0d4ff;
+  --linkon-dim:      #8877aa;
+  --linkon-border:   rgba(110,0,255,0.3);
+  --linkon-glow:     0 0 12px rgba(110,0,255,0.5);
+}
+
+/* ── Main browser window ──────────────────────────────────── */
+#main-window,
+#navigator-toolbox,
+#toolbar-menubar,
+#TabsToolbar,
+#nav-bar,
+#PersonalToolbar {
+  background-color: var(--linkon-void) !important;
+  border-color: var(--linkon-border) !important;
+}
+
+/* ── Tab bar ─────────────────────────────────────────────── */
+#TabsToolbar {
+  background: var(--linkon-void) !important;
+  border-bottom: 1px solid var(--linkon-border) !important;
+  padding: 0 4px !important;
+}
+
+/* Individual tabs */
+.tabbrowser-tab {
+  color: var(--linkon-dim) !important;
+  border-radius: 8px 8px 0 0 !important;
+  margin: 4px 2px 0 !important;
+}
+
+.tabbrowser-tab[selected="true"] {
+  color: var(--linkon-text) !important;
+  background: var(--linkon-deep) !important;
+  border: 1px solid var(--linkon-border) !important;
+  border-bottom: none !important;
+  box-shadow: var(--linkon-glow) !important;
+}
+
+.tabbrowser-tab:hover:not([selected]) {
+  background: rgba(110,0,255,0.1) !important;
+  color: var(--linkon-text) !important;
+}
+
+/* Tab text */
+.tab-label {
+  color: inherit !important;
+  font-family: 'Segoe UI', system-ui, sans-serif !important;
+  font-size: 12px !important;
+}
+
+/* Tab close button */
+.tab-close-button { opacity: 0.5 !important; }
+.tab-close-button:hover { opacity: 1 !important; fill: var(--linkon-orange) !important; }
+
+/* New tab button */
+#tabs-newtab-button,
+.tabs-newtab-button {
+  fill: var(--linkon-violet) !important;
+}
+#tabs-newtab-button:hover,
+.tabs-newtab-button:hover {
+  background: rgba(110,0,255,0.2) !important;
+  border-radius: 6px !important;
+}
+
+/* ── Nav / URL bar ───────────────────────────────────────── */
+#nav-bar {
+  background: var(--linkon-void) !important;
+  border-top: 1px solid var(--linkon-border) !important;
+  padding: 4px 8px !important;
+}
+
+#urlbar,
+#urlbar-background {
+  background: var(--linkon-deep) !important;
+  border: 1px solid var(--linkon-border) !important;
+  border-radius: 10px !important;
+  color: var(--linkon-text) !important;
+}
+
+#urlbar:focus-within,
+#urlbar[focused="true"] {
+  border-color: var(--linkon-violet) !important;
+  box-shadow: var(--linkon-glow) !important;
+}
+
+/* URL bar text */
+#urlbar-input {
+  color: var(--linkon-text) !important;
+  font-family: 'Fira Code', 'Cascadia Code', monospace !important;
+  font-size: 13px !important;
+}
+
+/* Lock icon */
+#identity-icon { fill: var(--linkon-cyan) !important; }
+
+/* Tracking protection icon */
+#tracking-protection-icon-container { fill: var(--linkon-green, #00ff88) !important; }
+
+/* ── Toolbar buttons ─────────────────────────────────────── */
+#back-button,
+#forward-button,
+#stop-button,
+#reload-button,
+#home-button {
+  fill: var(--linkon-dim) !important;
+  color: var(--linkon-dim) !important;
+  border-radius: 6px !important;
+}
+
+#back-button:hover,
+#forward-button:hover,
+#stop-button:hover,
+#reload-button:hover,
+#home-button:hover {
+  fill: var(--linkon-text) !important;
+  background: rgba(110,0,255,0.15) !important;
+}
+
+/* Extensions / Puzzle icon */
+#unified-extensions-button {
+  fill: var(--linkon-violet) !important;
+}
+
+/* ── Bookmarks toolbar ───────────────────────────────────── */
+#PersonalToolbar {
+  border-bottom: 1px solid var(--linkon-border) !important;
+  padding: 2px 8px !important;
+}
+
+.bookmark-item {
+  color: var(--linkon-dim) !important;
+  border-radius: 4px !important;
+}
+.bookmark-item:hover {
+  background: rgba(110,0,255,0.15) !important;
+  color: var(--linkon-text) !important;
+}
+
+/* ── Context menu ────────────────────────────────────────── */
+menupopup,
+.menupopup-animate {
+  background: var(--linkon-deep) !important;
+  border: 1px solid var(--linkon-border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8), var(--linkon-glow) !important;
+}
+
+menuitem {
+  color: var(--linkon-text) !important;
+  border-radius: 4px !important;
+}
+
+menuitem:hover {
+  background: rgba(110,0,255,0.2) !important;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+#sidebar-box {
+  background: var(--linkon-void) !important;
+  border-right: 1px solid var(--linkon-border) !important;
+}
+
+#sidebar-header {
+  background: var(--linkon-deep) !important;
+  color: var(--linkon-cyan) !important;
+  border-bottom: 1px solid var(--linkon-border) !important;
+}
+
+/* ── Find bar ────────────────────────────────────────────── */
+#findbar {
+  background: var(--linkon-deep) !important;
+  border-top: 1px solid var(--linkon-border) !important;
+  color: var(--linkon-text) !important;
+}
+
+/* ── Status bar ──────────────────────────────────────────── */
+#statuspanel-label {
+  background: var(--linkon-deep) !important;
+  color: var(--linkon-cyan) !important;
+  border: 1px solid var(--linkon-border) !important;
+  border-radius: 0 6px 0 0 !important;
+  font-size: 11px !important;
+}
+
+/* ── Scrollbars ──────────────────────────────────────────── */
+scrollbar {
+  background: transparent !important;
+}
+scrollbar thumb {
+  background: rgba(110,0,255,0.4) !important;
+  border-radius: 3px !important;
+}
+scrollbar thumb:hover {
+  background: var(--linkon-violet) !important;
+}
