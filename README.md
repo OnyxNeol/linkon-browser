@@ -1,7 +1,62 @@
 # ⬡ Linkon Browser
 
-> A developer's operating system inside a browser.
-> Built on Firefox ESR · Powered by Stract + OpenHands + Ollama · Branded by TeraBites
+> **A developer's operating system inside a browser.**  
+> Free. Open-source. No accounts required. No charges. Ever.
+
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
+[![Build Linkon All Platforms](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml)
+[![Powered by Firefox ESR](https://img.shields.io/badge/Engine-Firefox_ESR-orange)](https://www.mozilla.org/en-US/firefox/enterprise/)
+[![Search: Stract](https://img.shields.io/badge/Search-Stract_(self--hosted)-blueviolet)](https://stract.com)
+
+---
+
+## ✦ Free & Open-Source — Always
+
+Linkon is **100% free**. Every feature, every service, every pillar — free forever.
+
+| Feature | Cost |
+|---|---|
+| Linkon Browser | Free |
+| Linkon Agents | Free |
+| Linkon Universe | Free |
+| S Gallery™ Sandboxes | Free |
+| Infinite Tabs | Free |
+| Offline AI Copilot | Free |
+| All future features | Free |
+
+No subscriptions. No premium tiers. No telemetry. No ads.  
+Licensed under **MPL 2.0** — fork it, build on it, make it yours.
+
+---
+
+## Five Pillars
+
+### ❄️ 1. Infinite Tabs (Freeze Mode + HAW)
+Freeze tabs to near-zero resource usage while keeping sessions, cookies, and auth alive.  
+Half Active Website (HAW) mode polls just enough to stay verified — open 500 tabs without crashing.
+
+### 🧠 2. Offline AI Copilot
+A local AI assistant powered by [Ollama](https://ollama.ai) + CodeLlama.  
+Zero cloud. Works on a plane. Helps you code, debug, and automate — privately.
+
+### ⚗️ 3. S Gallery™ *(TB™)*
+The compute hub. Spin up sandboxes instantly — Python, Node, Rust, Linux, custom.  
+Sandboxes open as browser tabs via `ttyd` (terminal) or Jupyter (notebooks).  
+Agents live here. Powered by local Docker. Branded as mythic by TeraBites™.
+
+### 🤖 4. Linkon Agents + Extensions
+Agents orchestrate workflows directly inside the browser.  
+Built-in integrations: **GitHub**, **Hugging Face**, **Kaggle** — native, not scattered tabs.  
+Powered by [OpenHands](https://github.com/All-Hands-AI/OpenHands).
+
+### 🌌 5. Linkon Universe
+Login with **Linkon Pass** via TeraBites auth.  
+Auto-creates a Hugging Face org: `(YourName)-Linkon-Universe`.  
+- **Workspace** — your central hub (renameable)  
+- **Galaxies** — folders for projects, datasets, bookmarks, notes  
+- **Immediate Drop** — store anything instantly, organize later  
+
+*Compute stays in S Gallery. Storage lives in the Universe. Clean separation.*
 
 ---
 
@@ -9,149 +64,102 @@
 
 ```
 Linkon Browser
-├── Core:          Firefox ESR (Gecko rendering engine)
-├── Search:        Stract (open-source, self-hosted, zero Google)
-├── AI Agent:      OpenHands (open-source, safe, local)
-├── LLM Backend:   Ollama (CodeLlama 13B, runs fully offline)
-├── Auth:          TeraBites Linkon Pass
-└── Extension:     linkon-core.xpi (5 pillars)
+├── Engine          Firefox ESR (Gecko)
+├── Search          Stract (self-hosted, no Google)
+├── AI Agent        OpenHands (local Docker)
+├── AI Model        Ollama + CodeLlama (offline)
+├── Sandboxes       Docker → ttyd / Jupyter (browser tabs)
+├── Storage         Hugging Face Repos + Datasets API
+├── Auth            TeraBites (Linkon Pass)
+├── Extension       Linkon Core (.xpi) — injected at build
+└── Skin            userChrome.css — cosmic UI
 ```
 
----
+## Quick Start
 
-## Five Pillars
+### Option A — Download a build
+Go to [Releases](https://github.com/OnyxNeol/linkon-browser/releases) and grab the binary for your platform.
 
-### 1. ❄️ Infinite Tabs (Freeze Mode + HAW)
-- `src/tabs/tab-manager.js`
-- Freeze tabs → 2MB each vs 50–200MB active
-- HAW (Half Active Website) keeps sessions alive with HEAD pings
-- Tab groups by domain or project
+| Platform | File |
+|---|---|
+| Windows | `LinkonSetup-*.exe` |
+| macOS | `Linkon-*.dmg` |
+| Linux | `Linkon-*.AppImage` or `Linkon-*.deb` |
 
-### 2. 🧠 Offline AI Copilot
-- Powered by **Ollama** + **CodeLlama 13B** (fully local)
-- No internet required, no API key, no cloud
-- Accessed via floating panel in every tab
+### Option B — Build from source
 
-### 3. ⚗️ S Gallery™ (Sandbox Gallery · TB™)
-- `src/sgallery/sgallery-manager.js`
-- Spins up Docker containers: Python, Node, Rust, Linux, Jupyter, Go
-- Powered by **OpenHands** runtime
-- Agents live here — compute only, never storage
-
-### 4. 🤖 Linkon Agents + Extensions
-- `src/agents/agent-manager.js`
-- Powered by **OpenHands** (CodeActAgent, BrowsingAgent, etc.)
-- Local LLM via Ollama (CodeLlama) — zero external API
-- Native integrations: GitHub, Hugging Face, Kaggle
-
-### 5. 🌌 Linkon Universe
-- `src/universe/universe.html`
-- Login with **Linkon Pass** (TeraBites auth)
-- Auto-creates `{Username}-Linkon-Universe` HuggingFace org
-- Workspace → Galaxies → Items hierarchy
-- Quick Drop for immediate storage
-- IndexedDB local + HuggingFace Datasets cloud sync
-
----
-
-## Build Instructions
-
-### Prerequisites
-```
-Firefox ESR     → downloaded by build scripts
-Docker          → for S Gallery™ sandboxes
-Node.js 18+     → extension build tooling
-Python 3.11+    → Stract config helpers
+```bash
+git clone https://github.com/OnyxNeol/linkon-browser
+cd linkon-browser
 ```
 
-### Start backend services
+Push a version tag to trigger all three builds automatically:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Artifacts appear under **Actions → Build Linkon All Platforms → Artifacts**.
+
+### Option C — Run the backend locally
+
 ```bash
 docker-compose up -d
-# Wait for Ollama to pull CodeLlama (~8GB first run)
-docker logs linkon-ollama-init -f
 ```
 
-### Build on Windows
-```powershell
-cd build/windows
-.\build-windows.ps1 -Version "1.0.0"
-# Output: dist/windows/LinkonSetup-1.0.0.exe
-```
-
-### Build on macOS
-```bash
-cd build/macos
-chmod +x build-macos.sh
-./build-macos.sh 1.0.0
-# Output: dist/macos/Linkon-1.0.0.dmg
-```
+This starts:
+- **Stract** — self-hosted search at `localhost:3000`
+- **OpenHands** — AI agent dashboard at `localhost:3001`
+- **S Gallery** sandbox manager at `localhost:3002`
 
 ---
 
-## Search Engine
-
-Linkon uses **Stract** — a fully open-source search engine written in Rust.
-
-- GitHub: https://github.com/StractOrg/stract
-- Self-hosted at `http://localhost:3000`
-- Crawls dev-focused seed URLs (MDN, PyPI, crates.io, docs.github.com, etc.)
-- No Google. No Bing. No tracking.
-- Falls back to Brave Search if local Stract is offline.
-
----
-
-## AI Agent
-
-Linkon uses **OpenHands** — a safe, open-source AI agent framework.
-
-- GitHub: https://github.com/All-Hands-AI/OpenHands
-- LLM: **CodeLlama 13B** via Ollama (local, no API key)
-- Agent types: CodeActAgent, BrowsingAgent
-- Zero data leaves your machine
-
----
-
-## File Structure
+## Project Structure
 
 ```
-linkon/
+linkon-browser/
+├── .github/workflows/
+│   └── build-all.yml        # Windows + macOS + Linux CI
 ├── browser-config/
-│   ├── policies.json        # Firefox policy (removes Google)
-│   ├── autoconfig.js        # Startup config loader
-│   └── linkon.cfg           # Privileged browser prefs
+│   ├── policies.json        # Firefox enterprise policies
+│   └── linkon.cfg           # AutoConfig (disables telemetry)
 ├── extension/
 │   ├── manifest/manifest.json
 │   └── src/
 │       ├── background.js
-│       ├── content.js
-│       ├── tabs/tab-manager.js
-│       ├── agents/agent-manager.js
-│       ├── sgallery/sgallery-manager.js
-│       ├── search/search-router.js
-│       └── universe/
-│           ├── universe.html
-│           ├── universe.css
-│           ├── universe.js
-│           └── universe-sync.js
+│       ├── tabs/            # Infinite Tabs + HAW
+│       ├── sgallery/        # S Gallery sandbox manager
+│       ├── agents/          # Linkon Agents runtime
+│       ├── universe/        # Universe dashboard
+│       └── search/          # Stract search router
 ├── skin/chrome/
-│   ├── userChrome.css       # Browser UI skin
-│   └── userContent.css      # Page overrides
-├── stract-config/stract.toml
-├── docker-compose.yml       # Stract + OpenHands + Ollama
-├── build/
-│   ├── windows/build-windows.ps1
-│   └── macos/build-macos.sh
-└── README.md
+│   ├── userChrome.css       # Cosmic UI skin
+│   └── userContent.css
+├── stract-config/
+│   └── stract.toml
+└── docker-compose.yml       # Stract + OpenHands + S Gallery
 ```
+
+---
+
+## Contributing
+
+All contributions welcome. This is a community project.
+
+- Fork → branch → PR
+- No CLA required
+- Issues, ideas, and feedback: open an issue
 
 ---
 
 ## License
 
-Linkon Browser is built on open-source components:
-- Firefox ESR: Mozilla Public License 2.0
-- Stract: MIT License
-- OpenHands: MIT License
-- Ollama: MIT License
-- Linkon Layer: TeraBites © 2025 — All rights reserved
-# Linkon Browser — Three Platform Build
+**Mozilla Public License 2.0**  
+See [LICENSE](LICENSE) for full text.
+
+Linkon is built on Firefox ESR (MPL 2.0), Stract (MIT), and OpenHands (MIT).  
+The Linkon name, cosmic UI, and S Gallery™ branding are by **TeraBites™**.
+
+---
+
+*"Every developer deserves a universe."*

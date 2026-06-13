@@ -1,515 +1,820 @@
-// ============================================================
-// Linkon Universe — Main Dashboard JS
-// ============================================================
+/**
+ * Linkon Universe — Dashboard JS
+ * Free & Open-Source. No charges. No paywalls. Ever.
+ * TeraBites™ | MPL 2.0
+ */
 
-// ── Starfield ────────────────────────────────────────────────
-(function initStarfield() {
-  const canvas = document.getElementById('starfield');
-  const ctx = canvas.getContext('2d');
-  let stars = [];
+// ── Constants ─────────────────────────────────────────────────
+const LINKON_VERSION = "1.0.0";
+const LINKON_LICENSE = "MPL 2.0 — Free & Open-Source";
+
+// ── State ─────────────────────────────────────────────────────
+let currentUser = null;
+let galaxies = [];
+let activeGalaxy = null;
+let sandboxes = [];
+let tabs = [];
+let agents = [];
+
+// ── Boot sequence ──────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  initParticles();
+  showLoginScreen();
+  bindLoginForm();
+  renderFOSSBadge();
+});
+
+// ── FOSS Badge — always visible ────────────────────────────────
+function renderFOSSBadge() {
+  const badge = document.createElement("div");
+  badge.id = "foss-badge";
+  badge.innerHTML = `
+    <span class="foss-icon">⬡</span>
+    <span>Free &amp; Open-Source · MPL 2.0 · No charges, ever</span>
+    <a href="https://github.com/OnyxNeol/linkon-browser" target="_blank">GitHub</a>
+  `;
+  document.body.appendChild(badge);
+}
+
+// ── Particle starfield ─────────────────────────────────────────
+function initParticles() {
+  const canvas = document.getElementById("cosmos-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
 
   function resize() {
-    canvas.width = window.innerWidth;
+    canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
-    initStars();
   }
+  resize();
+  window.addEventListener("resize", resize);
 
-  function initStars() {
-    stars = Array.from({ length: 200 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 1.5,
-      speed: Math.random() * 0.3 + 0.05,
-      opacity: Math.random()
-    }));
-  }
+  const stars = Array.from({ length: 220 }, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: Math.random() * 1.8 + 0.2,
+    alpha: Math.random(),
+    speed: Math.random() * 0.004 + 0.001,
+    color: ["#ffffff", "#00d4ff", "#6e00ff", "#ff6b35"][Math.floor(Math.random() * 4)],
+  }));
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const s of stars) {
+      s.alpha += s.speed;
+      if (s.alpha > 1 || s.alpha < 0) s.speed *= -1;
+      ctx.globalAlpha = Math.abs(Math.sin(s.alpha));
+      ctx.fillStyle = s.color;
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(200,180,255,${s.opacity})`;
       ctx.fill();
-      s.y += s.speed;
-      s.opacity = Math.abs(Math.sin(Date.now() * 0.0005 + s.x));
-      if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
     }
+    ctx.globalAlpha = 1;
     requestAnimationFrame(draw);
   }
-
-  window.addEventListener('resize', resize);
-  resize();
   draw();
-})();
-
-// ── State ────────────────────────────────────────────────────
-let state = {
-  user: null,
-  galaxies: [],
-  tabs: [],
-  sandboxes: [],
-  agents: [],
-  currentGalaxy: null,
-  immediateItems: []
-};
-
-// ── Boot ─────────────────────────────────────────────────────
-async function boot() {
-  const stored = JSON.parse(localStorage.getItem('linkon-user') || 'null');
-  if (stored) {
-    state.user = stored;
-    await enterUniverse();
-  } else {
-    showScreen('login-screen');
-  }
 }
 
-// ── Screen Manager ───────────────────────────────────────────
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const el = document.getElementById(id);
-  if (el) el.classList.add('active');
+// ── Login ──────────────────────────────────────────────────────
+function showLoginScreen() {
+  document.getElementById("login-screen").style.display = "flex";
+  document.getElementById("universe-dashboard").style.display = "none";
 }
 
-// ── Login ─────────────────────────────────────────────────────
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value;
-  const statusEl = document.getElementById('login-status');
-  const btn = document.getElementById('login-btn');
+function bindLoginForm() {
+  const form = document.getElementById("login-form");
+  if (!form) return;
 
-  btn.querySelector('.btn-text').textContent = 'LAUNCHING…';
-  statusEl.textContent = 'Connecting to TeraBites auth…';
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value;
+    if (!username) return;
 
-  // Simulate auth (real auth hits TeraBites server)
-  await new Promise(r => setTimeout(r, 800));
-
-  state.user = {
-    username,
-    displayName: username,
-    universeOrg: `${username}-Linkon-Universe`,
-    avatar: username[0].toUpperCase(),
-    token: 'local-token'
-  };
-
-  localStorage.setItem('linkon-user', JSON.stringify(state.user));
-
-  // Show entering animation
-  showScreen('entering-screen');
-  document.getElementById('entering-text').textContent =
-    `Entering ${state.user.universeOrg}…`;
-
-  await new Promise(r => setTimeout(r, 2200));
-  await enterUniverse();
-});
-
-// ── Enter Universe ───────────────────────────────────────────
-async function enterUniverse() {
-  // Populate header
-  document.getElementById('universe-name-display').textContent =
-    state.user.universeOrg;
-  document.getElementById('user-avatar').textContent = state.user.avatar;
-
-  // Load data
-  loadGalaxies();
-  loadTabs();
-  loadSandboxes();
-  loadAgents();
-  checkServices();
-
-  showScreen('universe-screen');
-}
-
-// ── Galaxies ─────────────────────────────────────────────────
-function loadGalaxies() {
-  const stored = JSON.parse(localStorage.getItem('linkon-galaxies') || '[]');
-  if (stored.length === 0) {
-    state.galaxies = [
-      { id: 'g1', name: 'Projects',  icon: '🚀', color: '#6e00ff', itemCount: 4, updatedAt: Date.now() - 3600000 },
-      { id: 'g2', name: 'Datasets',  icon: '📊', color: '#00d4ff', itemCount: 7, updatedAt: Date.now() - 86400000 },
-      { id: 'g3', name: 'Bookmarks', icon: '🔖', color: '#ff6b35', itemCount: 12, updatedAt: Date.now() - 172800000 },
-      { id: 'g4', name: 'Notes',     icon: '📝', color: '#00ff88', itemCount: 3, updatedAt: Date.now() - 604800000 }
-    ];
-    localStorage.setItem('linkon-galaxies', JSON.stringify(state.galaxies));
-  } else {
-    state.galaxies = stored;
-  }
-  renderGalaxySidebar();
-  renderGalaxyGrid();
-  document.getElementById('stat-galaxies').textContent = state.galaxies.length;
-}
-
-function renderGalaxySidebar() {
-  const list = document.getElementById('galaxy-list');
-  list.innerHTML = state.galaxies.map(g => `
-    <li class="galaxy-item ${state.currentGalaxy?.id === g.id ? 'active' : ''}"
-        data-id="${g.id}" onclick="selectGalaxy('${g.id}')">
-      <span>${g.icon}</span>
-      <span>${g.name}</span>
-      <span class="galaxy-count">${g.itemCount}</span>
-    </li>
-  `).join('');
-}
-
-function renderGalaxyGrid() {
-  const grid = document.getElementById('galaxy-grid');
-  const items = state.currentGalaxy
-    ? [] // show items for selected galaxy
-    : state.galaxies;
-
-  grid.innerHTML = items.map(g => `
-    <div class="galaxy-card" style="--card-color:${g.color}" onclick="selectGalaxy('${g.id}')">
-      <div class="galaxy-icon">${g.icon}</div>
-      <div class="galaxy-name">${g.name}</div>
-      <div class="galaxy-meta">${g.itemCount} items · ${timeAgo(g.updatedAt)}</div>
-    </div>
-  `).join('');
-}
-
-function selectGalaxy(id) {
-  state.currentGalaxy = id === state.currentGalaxy?.id
-    ? null
-    : state.galaxies.find(g => g.id === id);
-
-  document.getElementById('current-galaxy-title').textContent =
-    state.currentGalaxy ? state.currentGalaxy.name : 'All Galaxies';
-
-  renderGalaxySidebar();
-  renderGalaxyGrid();
-}
-
-// New galaxy modal
-document.getElementById('btn-new-galaxy').addEventListener('click', () => {
-  openModal('modal-galaxy');
-});
-document.getElementById('modal-galaxy-cancel').addEventListener('click', () => closeModal('modal-galaxy'));
-document.getElementById('modal-galaxy-create').addEventListener('click', () => {
-  const name = document.getElementById('galaxy-name-input').value.trim();
-  const icon = document.getElementById('galaxy-icon-val').value;
-  if (!name) return;
-  const colors = ['#6e00ff','#00d4ff','#ff6b35','#00ff88','#ff00aa','#ffcc00'];
-  const newG = {
-    id: `g-${Date.now()}`, name, icon,
-    color: colors[Math.floor(Math.random() * colors.length)],
-    itemCount: 0, updatedAt: Date.now()
-  };
-  state.galaxies.push(newG);
-  localStorage.setItem('linkon-galaxies', JSON.stringify(state.galaxies));
-  renderGalaxySidebar(); renderGalaxyGrid();
-  document.getElementById('stat-galaxies').textContent = state.galaxies.length;
-  document.getElementById('galaxy-name-input').value = '';
-  closeModal('modal-galaxy');
-});
-
-document.querySelectorAll('.emoji-picker span').forEach(s => {
-  s.addEventListener('click', () => {
-    document.querySelectorAll('.emoji-picker span').forEach(x => x.classList.remove('selected'));
-    s.classList.add('selected');
-    document.getElementById('galaxy-icon-val').value = s.dataset.icon;
+    await runLoginSequence(username, password);
   });
-});
-
-// Drop zone
-const dropZone = document.getElementById('drop-zone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  const text = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('text/uri-list');
-  if (text) addImmediateItem(text);
-});
-
-function addImmediateItem(content) {
-  const item = { id: Date.now(), content, type: content.startsWith('http') ? '🔗' : '📝' };
-  state.immediateItems.push(item);
-  const container = document.getElementById('immediate-items');
-  const chip = document.createElement('div');
-  chip.className = 'item-chip';
-  chip.innerHTML = `<span>${item.type}</span><span>${content.slice(0, 40)}${content.length > 40 ? '…' : ''}</span>`;
-  container.appendChild(chip);
-  document.getElementById('stat-items').textContent =
-    state.immediateItems.length + state.galaxies.reduce((a, g) => a + g.itemCount, 0);
 }
 
-// ── Tab Manager ──────────────────────────────────────────────
-function loadTabs() {
-  // Simulated tabs (real implementation uses browser.tabs API in extension context)
-  state.tabs = [
-    { id: 1, title: 'GitHub — onyxlneo', url: 'https://github.com', status: 'active',   memoryMB: 87,  favicon: '🐙' },
-    { id: 2, title: 'Hugging Face Spaces', url: 'https://huggingface.co', status: 'haw', memoryMB: 4,  favicon: '🤗' },
-    { id: 3, title: 'Kaggle Notebook',    url: 'https://kaggle.com',     status: 'frozen', memoryMB: 2, favicon: '📊' },
-    { id: 4, title: 'MDN Web Docs',       url: 'https://developer.mozilla.org', status: 'active', memoryMB: 54, favicon: '📖' },
-    { id: 5, title: 'Stack Overflow',     url: 'https://stackoverflow.com',     status: 'frozen', memoryMB: 2, favicon: '❓' }
+async function runLoginSequence(username, password) {
+  const loginBtn = document.getElementById("login-btn");
+  const statusEl = document.getElementById("login-status");
+
+  loginBtn.disabled = true;
+  loginBtn.textContent = "Entering universe…";
+
+  const steps = [
+    { msg: `Authenticating via Linkon Pass…`, delay: 600 },
+    { msg: `Initializing ${username}-Linkon-Universe…`, delay: 800 },
+    { msg: `Connecting to Hugging Face org…`, delay: 700 },
+    { msg: `Loading galaxies…`, delay: 600 },
+    { msg: `Syncing S Gallery™ sandboxes…`, delay: 500 },
+    { msg: `Activating Linkon Agents…`, delay: 400 },
+    { msg: `Universe ready ✦`, delay: 300 },
   ];
-  renderTabs();
-  updateTabBadge();
-}
 
-function renderTabs() {
-  const list = document.getElementById('tab-list');
-  list.innerHTML = state.tabs.map(t => `
-    <div class="tab-row">
-      <span class="tab-favicon">${t.favicon}</span>
-      <span class="tab-title" title="${t.url}">${t.title}</span>
-      <div class="tab-status-dot status-${t.status}"></div>
-      <button class="tab-action" onclick="toggleTabStatus(${t.id})">
-        ${t.status === 'frozen' ? '▶ Thaw' : t.status === 'haw' ? '❄ Freeze' : '❄ Freeze'}
-      </button>
-    </div>
-  `).join('');
-
-  const frozen = state.tabs.filter(t => t.status === 'frozen').length;
-  const haw    = state.tabs.filter(t => t.status === 'haw').length;
-  const savedMB = state.tabs.filter(t => t.status === 'frozen').reduce((a, t) => a + 50 - t.memoryMB, 0);
-  document.getElementById('frozen-count').textContent = frozen;
-  document.getElementById('haw-count').textContent = haw;
-  document.getElementById('saved-mb').textContent = savedMB;
-  document.getElementById('stat-frozen').textContent = frozen;
-  document.getElementById('stat-haw').textContent = haw;
-}
-
-function toggleTabStatus(id) {
-  const tab = state.tabs.find(t => t.id === id);
-  if (!tab) return;
-  if (tab.status === 'frozen') { tab.status = 'active'; tab.memoryMB = 55; }
-  else { tab.status = 'frozen'; tab.memoryMB = 2; }
-  renderTabs();
-}
-
-function updateTabBadge() {
-  document.getElementById('tabs-count').textContent = state.tabs.length;
-}
-
-// ── S Gallery™ ───────────────────────────────────────────────
-function loadSandboxes() {
-  state.sandboxes = [
-    { id: 'sb1', name: 'Python 3.11', icon: '🐍', runtime: 'python', status: 'idle', cpuPercent: 0, memoryMB: 0 },
-    { id: 'sb2', name: 'Node.js 20',  icon: '🟢', runtime: 'node',   status: 'idle', cpuPercent: 0, memoryMB: 0 },
-    { id: 'sb3', name: 'Rust',        icon: '🦀', runtime: 'rust',   status: 'idle', cpuPercent: 0, memoryMB: 0 },
-    { id: 'sb4', name: 'Ubuntu',      icon: '🐧', runtime: 'linux',  status: 'idle', cpuPercent: 0, memoryMB: 0 },
-    { id: 'sb5', name: 'Jupyter Lab', icon: '📓', runtime: 'jupyter',status: 'idle', cpuPercent: 0, memoryMB: 0 },
-    { id: 'sb6', name: 'Go 1.22',     icon: '🐹', runtime: 'golang', status: 'idle', cpuPercent: 0, memoryMB: 0 }
-  ];
-  renderRuntimes();
-  renderSandboxes();
-}
-
-function renderRuntimes() {
-  const grid = document.getElementById('runtime-grid');
-  grid.innerHTML = state.sandboxes.map(s => `
-    <div class="runtime-card" onclick="launchSandbox('${s.id}')">
-      <div class="r-icon">${s.icon}</div>
-      <div class="r-name">${s.name}</div>
-    </div>
-  `).join('');
-}
-
-function renderSandboxes() {
-  const running = state.sandboxes.filter(s => s.status === 'running');
-  const list = document.getElementById('sandbox-list');
-  if (running.length === 0) {
-    list.innerHTML = '<div style="font-size:0.8rem;color:var(--text-dim);text-align:center;padding:1rem">No running sandboxes</div>';
-    return;
+  for (const step of steps) {
+    statusEl.textContent = step.msg;
+    statusEl.style.opacity = "1";
+    await sleep(step.delay);
+    statusEl.style.opacity = "0.5";
   }
-  list.innerHTML = running.map(s => `
-    <div class="sandbox-row">
-      <span style="font-size:1.25rem">${s.icon}</span>
+
+  currentUser = {
+    username,
+    universeName: `${username}-Linkon-Universe`,
+    workspaceName: "My Workspace",
+    hfOrg: `${username}-Linkon-Universe`,
+    joinedAt: new Date().toISOString(),
+  };
+
+  initDefaultData();
+  enterDashboard();
+}
+
+// ── Default demo data ─────────────────────────────────────────
+function initDefaultData() {
+  galaxies = [
+    { id: "g1", name: "Projects", icon: "🚀", color: "#6e00ff", items: 12, updated: "2 hours ago" },
+    { id: "g2", name: "Datasets", icon: "📊", color: "#00d4ff", items: 7, updated: "1 day ago" },
+    { id: "g3", name: "Bookmarks", icon: "⭐", color: "#ff6b35", items: 34, updated: "3 hours ago" },
+    { id: "g4", name: "Notes", icon: "📝", color: "#00ff88", items: 5, updated: "Just now" },
+    { id: "g5", name: "Models", icon: "🧠", color: "#ff00aa", items: 3, updated: "5 days ago" },
+  ];
+
+  sandboxes = [
+    { id: "s1", name: "Python 3.11", icon: "🐍", runtime: "python:3.11", status: "idle",    cpu: 0,  mem: 0   },
+    { id: "s2", name: "Node 20",    icon: "🟩", runtime: "node:20",      status: "running", cpu: 12, mem: 180 },
+    { id: "s3", name: "Ubuntu LTS", icon: "🐧", runtime: "ubuntu:22.04", status: "idle",    cpu: 0,  mem: 0   },
+    { id: "s4", name: "Rust",       icon: "🦀", runtime: "rust:latest",  status: "idle",    cpu: 0,  mem: 0   },
+    { id: "s5", name: "Custom",     icon: "⚙️", runtime: "custom",       status: "idle",    cpu: 0,  mem: 0   },
+  ];
+
+  tabs = [
+    { id: "t1", title: "GitHub — OnyxNeol/linkon-browser", url: "https://github.com", status: "active", mem: 210, domain: "github.com" },
+    { id: "t2", title: "Hugging Face — Models",            url: "https://huggingface.co", status: "frozen", mem: 8, domain: "huggingface.co" },
+    { id: "t3", title: "Kaggle — Competitions",            url: "https://kaggle.com", status: "haw",    mem: 22, domain: "kaggle.com" },
+    { id: "t4", title: "MDN Web Docs",                     url: "https://developer.mozilla.org", status: "active", mem: 95, domain: "mdn.io" },
+    { id: "t5", title: "Stack Overflow — Q&A",             url: "https://stackoverflow.com", status: "frozen", mem: 5,  domain: "stackoverflow.com" },
+  ];
+
+  agents = [
+    { id: "a1", name: "Code Reviewer",  status: "idle",    task: "Waiting for diff…" },
+    { id: "a2", name: "Dataset Syncer", status: "running", task: "Syncing HF datasets…" },
+    { id: "a3", name: "PR Watcher",     status: "idle",    task: "Monitoring OnyxNeol/linkon-browser" },
+  ];
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+function enterDashboard() {
+  document.getElementById("login-screen").style.display = "none";
+  const dash = document.getElementById("universe-dashboard");
+  dash.style.display = "grid";
+  dash.style.opacity = "0";
+  dash.style.transition = "opacity 0.6s ease";
+  setTimeout(() => { dash.style.opacity = "1"; }, 50);
+
+  renderDashboard();
+}
+
+function renderDashboard() {
+  renderTopNav();
+  renderSidebar();
+  renderGalaxyGrid();
+  renderDropZone();
+  renderStatsBar();
+  renderSGalleryPanel();
+  renderTabsPanel();
+  renderAIPanel();
+  renderAgentsPanel();
+  bindPanelToggles();
+}
+
+// ── Top Nav ────────────────────────────────────────────────────
+function renderTopNav() {
+  const nav = document.getElementById("top-nav");
+  if (!nav) return;
+  nav.innerHTML = `
+    <div class="nav-logo">
+      <span class="logo-hex">⬡</span>
+      <span class="logo-text">Linkon</span>
+      <span class="logo-version">${LINKON_VERSION}</span>
+    </div>
+    <div class="nav-universe-name">${currentUser.universeName}</div>
+    <div class="nav-actions">
+      <button class="nav-btn" id="btn-tabs" title="Infinite Tabs">❄️ Tabs</button>
+      <button class="nav-btn" id="btn-sgallery" title="S Gallery">⚗️ S Gallery™</button>
+      <button class="nav-btn" id="btn-agents" title="Linkon Agents">🤖 Agents</button>
+      <div class="nav-avatar" title="${currentUser.username}">${currentUser.username[0].toUpperCase()}</div>
+    </div>
+  `;
+}
+
+// ── Sidebar ────────────────────────────────────────────────────
+function renderSidebar() {
+  const sb = document.getElementById("sidebar");
+  if (!sb) return;
+
+  const wsNameEl = `
+    <div class="workspace-header">
+      <span class="workspace-label">Workspace</span>
+      <span class="workspace-name" id="workspace-name" contenteditable="true"
+        title="Click to rename">${currentUser.workspaceName}</span>
+    </div>
+  `;
+
+  const galaxyList = galaxies.map(g => `
+    <div class="galaxy-sidebar-item" data-id="${g.id}" onclick="openGalaxy('${g.id}')">
+      <span class="galaxy-sb-icon">${g.icon}</span>
+      <span class="galaxy-sb-name">${g.name}</span>
+      <span class="galaxy-sb-count">${g.items}</span>
+    </div>
+  `).join("");
+
+  sb.innerHTML = `
+    ${wsNameEl}
+    <div class="sidebar-section-title">Galaxies</div>
+    <div class="galaxy-sidebar-list">${galaxyList}</div>
+    <button class="btn-new-galaxy" onclick="createGalaxy()">+ New Galaxy</button>
+    <div class="sidebar-footer">
+      <span class="foss-label">Free &amp; Open-Source</span>
+      <span class="foss-license">MPL 2.0</span>
+    </div>
+  `;
+
+  // Workspace rename
+  const wsName = document.getElementById("workspace-name");
+  if (wsName) {
+    wsName.addEventListener("blur", () => {
+      currentUser.workspaceName = wsName.textContent.trim() || "My Workspace";
+    });
+  }
+}
+
+// ── Galaxy Grid ────────────────────────────────────────────────
+function renderGalaxyGrid() {
+  const grid = document.getElementById("galaxy-grid");
+  if (!grid) return;
+
+  grid.innerHTML = `
+    <div class="section-title">
+      <span>✦ Your Galaxies</span>
+      <button class="btn-sm" onclick="createGalaxy()">+ New Galaxy</button>
+    </div>
+    <div class="galaxy-cards">
+      ${galaxies.map(g => renderGalaxyCard(g)).join("")}
+    </div>
+  `;
+}
+
+function renderGalaxyCard(g) {
+  return `
+    <div class="galaxy-card" data-id="${g.id}" onclick="openGalaxy('${g.id}')"
+         style="--galaxy-color: ${g.color}">
+      <div class="galaxy-card-orb" style="background: ${g.color}22; border-color: ${g.color}">
+        <span class="galaxy-card-icon">${g.icon}</span>
+      </div>
+      <div class="galaxy-card-name">${g.name}</div>
+      <div class="galaxy-card-meta">
+        <span>${g.items} items</span>
+        <span>${g.updated}</span>
+      </div>
+      <div class="galaxy-card-glow" style="background: radial-gradient(circle, ${g.color}33, transparent 70%)"></div>
+    </div>
+  `;
+}
+
+function openGalaxy(id) {
+  const g = galaxies.find(g => g.id === id);
+  if (!g) return;
+  activeGalaxy = g;
+  showModal(`
+    <div class="modal-galaxy-header" style="border-color:${g.color}">
+      <span style="font-size:2rem">${g.icon}</span>
+      <div>
+        <div class="modal-title">${g.name}</div>
+        <div class="modal-sub">${g.items} items · ${g.updated}</div>
+      </div>
+    </div>
+    <div class="modal-galaxy-items">
+      ${Array.from({length: Math.min(g.items, 6)}, (_, i) => `
+        <div class="galaxy-item-row">
+          <span class="galaxy-item-icon">${["📁","📄","🔗","📊","🧠","⚗️"][i % 6]}</span>
+          <span class="galaxy-item-name">${g.name} item ${i + 1}</span>
+          <span class="galaxy-item-type">${["repo","dataset","bookmark","note","model","sandbox"][i % 6]}</span>
+        </div>
+      `).join("")}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="closeModal()">Close</button>
+      <button class="btn-ghost" onclick="addItemToGalaxy('${g.id}')">+ Add Item</button>
+    </div>
+  `);
+}
+
+function createGalaxy() {
+  showModal(`
+    <div class="modal-title">New Galaxy</div>
+    <div class="modal-sub">A galaxy is a folder in your Universe</div>
+    <input class="modal-input" id="new-galaxy-name" placeholder="Galaxy name…" />
+    <div class="emoji-picker">
+      ${["🚀","📊","⭐","📝","🧠","🔬","🎮","🌍","🔧","📦"].map(e =>
+        `<span class="emoji-opt" onclick="selectEmoji('${e}')">${e}</span>`
+      ).join("")}
+    </div>
+    <input type="hidden" id="new-galaxy-emoji" value="🚀" />
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="submitNewGalaxy()">Create Galaxy</button>
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  `);
+}
+
+function selectEmoji(e) {
+  document.getElementById("new-galaxy-emoji").value = e;
+  document.querySelectorAll(".emoji-opt").forEach(el => el.classList.remove("selected"));
+  event.target.classList.add("selected");
+}
+
+function submitNewGalaxy() {
+  const name  = document.getElementById("new-galaxy-name").value.trim();
+  const emoji = document.getElementById("new-galaxy-emoji").value;
+  if (!name) return;
+  const colors = ["#6e00ff","#00d4ff","#ff6b35","#00ff88","#ff00aa","#ffcc00"];
+  galaxies.push({
+    id: "g" + Date.now(),
+    name,
+    icon: emoji,
+    color: colors[galaxies.length % colors.length],
+    items: 0,
+    updated: "Just now",
+  });
+  closeModal();
+  renderGalaxyGrid();
+  renderSidebar();
+  renderStatsBar();
+}
+
+function addItemToGalaxy(galaxyId) {
+  const g = galaxies.find(x => x.id === galaxyId);
+  if (g) { g.items++; g.updated = "Just now"; }
+  closeModal();
+  renderGalaxyGrid();
+  renderStatsBar();
+}
+
+// ── Quick Drop Zone ────────────────────────────────────────────
+function renderDropZone() {
+  const dz = document.getElementById("drop-zone");
+  if (!dz) return;
+  dz.innerHTML = `
+    <div class="dropzone-title">⚡ Quick Drop</div>
+    <div class="dropzone-sub">Drop items here — store instantly, organize later</div>
+    <div class="dropzone-area" id="drop-area"
+         ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+      <span class="dropzone-icon">⬇</span>
+      <span>Drag files, URLs, or repos here</span>
+    </div>
+    <div class="dropzone-actions">
+      <button class="btn-ghost btn-sm" onclick="pasteURL()">Paste URL</button>
+      <button class="btn-ghost btn-sm" onclick="addFromHF()">From Hugging Face</button>
+      <button class="btn-ghost btn-sm" onclick="addFromGitHub()">From GitHub</button>
+    </div>
+    <div class="dropzone-recent" id="drop-recent"></div>
+  `;
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const files = [...e.dataTransfer.files];
+  const urls  = e.dataTransfer.getData("text/uri-list");
+  const text  = e.dataTransfer.getData("text/plain");
+  const label = files.length ? files.map(f => f.name).join(", ") : (urls || text || "Item");
+  addDroppedItem(label, files.length ? "file" : "url");
+}
+
+function addDroppedItem(label, type) {
+  const recent = document.getElementById("drop-recent");
+  if (!recent) return;
+  const item = document.createElement("div");
+  item.className = "dropped-item";
+  item.innerHTML = `
+    <span>${type === "file" ? "📄" : "🔗"}</span>
+    <span>${label}</span>
+    <span class="dropped-ts">Just now</span>
+  `;
+  recent.prepend(item);
+  if (recent.children.length > 5) recent.lastChild.remove();
+}
+
+function pasteURL() {
+  const url = prompt("Paste a URL to store in your Universe:");
+  if (url) addDroppedItem(url, "url");
+}
+
+function addFromHF()     { addDroppedItem("Hugging Face resource", "hf");     }
+function addFromGitHub() { addDroppedItem("GitHub repository",     "github"); }
+
+// ── Stats Bar ─────────────────────────────────────────────────
+function renderStatsBar() {
+  const bar = document.getElementById("stats-bar");
+  if (!bar) return;
+  const totalItems = galaxies.reduce((s, g) => s + g.items, 0);
+  bar.innerHTML = `
+    <span class="stat-item">🌌 ${currentUser.universeName}</span>
+    <span class="stat-sep">·</span>
+    <span class="stat-item">${galaxies.length} Galaxies</span>
+    <span class="stat-sep">·</span>
+    <span class="stat-item">${totalItems} Items</span>
+    <span class="stat-sep">·</span>
+    <span class="stat-item">${sandboxes.filter(s => s.status === "running").length} Sandboxes Running</span>
+    <span class="stat-sep">·</span>
+    <span class="stat-item foss-stat">⬡ Free &amp; Open-Source</span>
+  `;
+}
+
+// ── S Gallery™ Panel ──────────────────────────────────────────
+function renderSGalleryPanel() {
+  const panel = document.getElementById("sgallery-panel");
+  if (!panel) return;
+  panel.innerHTML = `
+    <div class="panel-header">
+      <span>⚗️ S Gallery™</span>
+      <span class="tb-badge">TB™</span>
+      <button class="panel-close" onclick="togglePanel('sgallery-panel')">✕</button>
+    </div>
+    <div class="panel-note foss-note">Free. No limits. Powered by local Docker.</div>
+    <div class="sandbox-list">
+      ${sandboxes.map(s => renderSandboxCard(s)).join("")}
+    </div>
+    <button class="btn-primary btn-full" onclick="newSandbox()">+ New Sandbox</button>
+    <div class="panel-section-title">Active Agents</div>
+    <div class="agent-list">
+      ${agents.map(a => `
+        <div class="agent-row">
+          <span class="agent-status ${a.status}">${a.status === "running" ? "●" : "○"}</span>
+          <span class="agent-name">${a.name}</span>
+          <span class="agent-task">${a.task}</span>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderSandboxCard(s) {
+  const isRunning = s.status === "running";
+  return `
+    <div class="sandbox-card ${isRunning ? "sandbox-running" : ""}">
+      <div class="sandbox-icon">${s.icon}</div>
       <div class="sandbox-info">
         <div class="sandbox-name">${s.name}</div>
-        <div class="sandbox-meta">CPU: ${s.cpuPercent.toFixed(1)}% · RAM: ${s.memoryMB}MB</div>
-        <div class="resource-bar"><div class="resource-fill" style="width:${s.cpuPercent}%"></div></div>
+        <div class="sandbox-runtime">${s.runtime}</div>
+        ${isRunning ? `<div class="sandbox-usage">CPU ${s.cpu}% · RAM ${s.mem}MB</div>` : ""}
       </div>
-      <button class="tab-action" onclick="stopSandbox('${s.id}')">■ Stop</button>
+      <button class="sandbox-btn ${isRunning ? "btn-stop" : "btn-launch"}"
+        onclick="toggleSandbox('${s.id}')">
+        ${isRunning ? "Stop" : "Launch"}
+      </button>
     </div>
-  `).join('');
+  `;
 }
 
-function launchSandbox(id) {
-  const sb = state.sandboxes.find(s => s.id === id);
-  if (!sb) return;
-  sb.status = 'running';
-  sb.cpuPercent = Math.random() * 20 + 5;
-  sb.memoryMB = Math.floor(Math.random() * 200 + 80);
-  renderRuntimes(); renderSandboxes();
-}
-
-function stopSandbox(id) {
-  const sb = state.sandboxes.find(s => s.id === id);
-  if (sb) { sb.status = 'idle'; sb.cpuPercent = 0; sb.memoryMB = 0; }
-  renderSandboxes();
-}
-
-// ── Agents ───────────────────────────────────────────────────
-function loadAgents() {
-  state.agents = [];
-  renderAgents();
-}
-
-function renderAgents() {
-  const list = document.getElementById('agent-list');
-  if (state.agents.length === 0) {
-    list.innerHTML = '<div style="font-size:0.8rem;color:var(--text-dim);text-align:center;padding:1rem">No active agents. Launch one above.</div>';
+function toggleSandbox(id) {
+  const s = sandboxes.find(x => x.id === id);
+  if (!s) return;
+  if (s.status === "running") {
+    s.status = "idle"; s.cpu = 0; s.mem = 0;
   } else {
-    list.innerHTML = state.agents.map(a => `
-      <div class="agent-row">
-        <span style="font-size:1.25rem">🤖</span>
-        <div class="agent-info">
-          <div class="agent-name">${a.name}</div>
-          <div class="agent-task">${a.task || 'Idle'}</div>
-        </div>
-        <span class="agent-status-badge status-${a.status}">${a.status.toUpperCase()}</span>
-      </div>
-    `).join('');
+    s.status = "running";
+    s.cpu = Math.floor(Math.random() * 30) + 5;
+    s.mem = Math.floor(Math.random() * 400) + 80;
   }
-  document.getElementById('agents-count').textContent = state.agents.length;
+  renderSGalleryPanel();
+  renderStatsBar();
 }
 
-document.getElementById('btn-launch-agent').addEventListener('click', () => {
-  const types = ['CodeAgent','BrowseAgent','GitAgent','DataAgent'];
-  const type = types[Math.floor(Math.random() * types.length)];
-  const agent = {
-    id: `agent-${Date.now()}`,
-    name: `${type}-${state.agents.length + 1}`,
-    type, status: 'running',
-    task: 'Awaiting instructions…',
-    startedAt: Date.now()
-  };
-  state.agents.push(agent);
-  renderAgents();
-});
+function newSandbox() {
+  showModal(`
+    <div class="modal-title">New Sandbox</div>
+    <div class="modal-sub foss-note">Free. Runs locally via Docker.</div>
+    <select class="modal-input" id="runtime-select">
+      <option value="python:3.11">Python 3.11</option>
+      <option value="node:20">Node 20</option>
+      <option value="ubuntu:22.04">Ubuntu 22.04</option>
+      <option value="rust:latest">Rust (latest)</option>
+      <option value="golang:latest">Go (latest)</option>
+      <option value="ruby:3.2">Ruby 3.2</option>
+      <option value="custom">Custom image…</option>
+    </select>
+    <input class="modal-input" id="sandbox-name-input" placeholder="Sandbox name (optional)" />
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="launchNewSandbox()">Launch Sandbox</button>
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+    </div>
+  `);
+}
 
-// ── AI Copilot ───────────────────────────────────────────────
-const responses = [
-  "I've analyzed your code. The issue is likely a null reference on line 12 — add an optional chaining check: `obj?.property`.",
-  "Here's a unit test for that function:\n```js\ntest('should return correct value', () => {\n  expect(fn(input)).toBe(expected);\n});\n```",
-  "This code iterates O(n²) — you can optimize to O(n) using a hash map for lookups.",
-  "The regex pattern `^[a-z0-9_-]{3,16}$` will validate that username field.",
-  "I'd suggest breaking this into smaller functions — the single responsibility principle will make it much easier to test.",
-  "Your Docker compose file looks correct. Make sure `depends_on` is set so the DB starts before the app container.",
-  "For Rust: use `Result<T, E>` instead of unwrap() to handle errors gracefully without panicking.",
-  "Running locally — no data leaves your machine. Ask me anything."
-];
+function launchNewSandbox() {
+  const rt   = document.getElementById("runtime-select").value;
+  const name = document.getElementById("sandbox-name-input").value.trim() || rt.split(":")[0];
+  const icons = { python:"🐍", node:"🟩", ubuntu:"🐧", rust:"🦀", golang:"🐹", ruby:"💎", custom:"⚙️" };
+  const icon = icons[rt.split(":")[0]] || "⚙️";
+  sandboxes.push({
+    id: "s" + Date.now(), name, icon, runtime: rt,
+    status: "running",
+    cpu: Math.floor(Math.random() * 20) + 2,
+    mem: Math.floor(Math.random() * 200) + 50,
+  });
+  closeModal();
+  renderSGalleryPanel();
+  renderStatsBar();
+}
 
-document.getElementById('copilot-toggle').addEventListener('click', () => {
-  document.getElementById('ai-copilot').classList.toggle('collapsed');
-});
+// ── Infinite Tabs Panel ───────────────────────────────────────
+function renderTabsPanel() {
+  const panel = document.getElementById("tabs-panel");
+  if (!panel) return;
+  const frozen  = tabs.filter(t => t.status === "frozen");
+  const haw     = tabs.filter(t => t.status === "haw");
+  const active  = tabs.filter(t => t.status === "active");
+  const savedMB = frozen.reduce((s, t) => s + t.mem, 0) + haw.reduce((s, t) => s + (t.mem * 0.5), 0);
 
-function sendCopilotMessage(msg) {
-  if (!msg.trim()) return;
-  const messagesEl = document.getElementById('copilot-messages');
+  panel.innerHTML = `
+    <div class="panel-header">
+      <span>❄️ Infinite Tabs</span>
+      <button class="panel-close" onclick="togglePanel('tabs-panel')">✕</button>
+    </div>
+    <div class="tabs-stats">
+      <span>🟢 Active: ${active.length}</span>
+      <span>❄️ Frozen: ${frozen.length}</span>
+      <span>👁 HAW: ${haw.length}</span>
+      <span>💾 Saved: ~${Math.round(savedMB)}MB</span>
+    </div>
+    <div class="tab-list">
+      ${tabs.map(t => renderTabRow(t)).join("")}
+    </div>
+    <button class="btn-ghost btn-sm" onclick="addDemoTab()">+ Simulate New Tab</button>
+  `;
+}
 
-  const userEl = document.createElement('div');
-  userEl.className = 'msg-user'; userEl.textContent = msg;
-  messagesEl.appendChild(userEl);
+function renderTabRow(t) {
+  const statusIcon = { active:"🟢", frozen:"❄️", haw:"👁" }[t.status] || "⚪";
+  const statusLabel = { active:"Active", frozen:"Frozen", haw:"HAW" }[t.status];
+  return `
+    <div class="tab-row">
+      <span class="tab-status-icon">${statusIcon}</span>
+      <div class="tab-info">
+        <div class="tab-title" title="${t.url}">${t.title}</div>
+        <div class="tab-meta">${t.domain} · ${t.mem}MB · ${statusLabel}</div>
+      </div>
+      <div class="tab-actions">
+        <button class="tab-btn" onclick="cycleTabState('${t.id}')" title="Toggle state">
+          ${t.status === "active" ? "Freeze" : t.status === "frozen" ? "HAW" : "Activate"}
+        </button>
+      </div>
+    </div>
+  `;
+}
 
-  const aiEl = document.createElement('div');
-  aiEl.className = 'msg-ai'; aiEl.textContent = '…';
-  messagesEl.appendChild(aiEl);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+function cycleTabState(id) {
+  const t = tabs.find(x => x.id === id);
+  if (!t) return;
+  if      (t.status === "active") { t.status = "frozen"; t.mem = Math.max(4, Math.round(t.mem * 0.04)); }
+  else if (t.status === "frozen") { t.status = "haw";    t.mem = Math.max(8, Math.round(t.mem * 2.5));  }
+  else                            { t.status = "active"; t.mem = Math.round(t.mem * 10);                }
+  renderTabsPanel();
+}
 
-  document.getElementById('ai-copilot').classList.remove('collapsed');
+function addDemoTab() {
+  tabs.push({
+    id: "t" + Date.now(),
+    title: "New Tab — " + new Date().toLocaleTimeString(),
+    url: "about:blank", status: "active",
+    mem: Math.floor(Math.random() * 200) + 50,
+    domain: "new tab",
+  });
+  renderTabsPanel();
+}
+
+// ── Offline AI Copilot ─────────────────────────────────────────
+const AI_RESPONSES = {
+  debug:   "I found a potential issue on line 42. The variable `result` may be undefined if the async call resolves to `null`. Add a null check: `if (!result) return;`",
+  explain: "This function uses a closure to capture `config` from the outer scope. Each call to `createHandler()` returns a new function that remembers the `config` at the time it was created — that's the classic closure pattern.",
+  test:    "Here's a Jest test for this function:\n\n```js\ntest('returns correct value', () => {\n  const result = myFunction('input');\n  expect(result).toBe('expected');\n});\n```",
+  default: "I'm your Linkon AI Copilot — running locally, no cloud needed. Ask me about code, debugging, architecture, or anything dev-related.",
+};
+
+function renderAIPanel() {
+  const panel = document.getElementById("ai-panel");
+  if (!panel) return;
+  panel.innerHTML = `
+    <div class="panel-header">
+      <span>🧠 AI Copilot</span>
+      <span class="offline-badge">● Offline</span>
+      <button class="panel-close" onclick="togglePanel('ai-panel')">✕</button>
+    </div>
+    <div class="ai-foss-note">Runs locally · Powered by Ollama + CodeLlama · No cloud · Free</div>
+    <div class="ai-chat" id="ai-chat">
+      <div class="ai-msg ai-msg-bot">
+        <span class="ai-avatar">🧠</span>
+        <span>${AI_RESPONSES.default}</span>
+      </div>
+    </div>
+    <div class="ai-quick-actions">
+      <button class="ai-quick-btn" onclick="aiQuickAction('debug')">🔍 Debug this</button>
+      <button class="ai-quick-btn" onclick="aiQuickAction('explain')">💡 Explain code</button>
+      <button class="ai-quick-btn" onclick="aiQuickAction('test')">🧪 Write test</button>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="ai-input" placeholder="Ask anything…" onkeydown="if(event.key==='Enter')sendAIMessage()" />
+      <button class="ai-send-btn" onclick="sendAIMessage()">↑</button>
+    </div>
+  `;
+}
+
+function sendAIMessage() {
+  const input = document.getElementById("ai-input");
+  const chat  = document.getElementById("ai-chat");
+  const msg   = input.value.trim();
+  if (!msg) return;
+
+  const userBubble = document.createElement("div");
+  userBubble.className = "ai-msg ai-msg-user";
+  userBubble.innerHTML = `<span>${msg}</span>`;
+  chat.appendChild(userBubble);
+  input.value = "";
+
+  const typing = document.createElement("div");
+  typing.className = "ai-msg ai-msg-bot";
+  typing.innerHTML = `<span class="ai-avatar">🧠</span><span class="ai-typing">thinking…</span>`;
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
 
   setTimeout(() => {
-    aiEl.textContent = responses[Math.floor(Math.random() * responses.length)];
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }, 800);
-
-  document.getElementById('copilot-input').value = '';
+    const lower = msg.toLowerCase();
+    const key = lower.includes("debug") ? "debug"
+              : lower.includes("explain") || lower.includes("what") ? "explain"
+              : lower.includes("test") ? "test"
+              : "default";
+    typing.innerHTML = `<span class="ai-avatar">🧠</span><pre class="ai-pre">${AI_RESPONSES[key]}</pre>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 900);
 }
 
-document.getElementById('copilot-send').addEventListener('click', () =>
-  sendCopilotMessage(document.getElementById('copilot-input').value));
-document.getElementById('copilot-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') sendCopilotMessage(e.target.value);
-});
-document.querySelectorAll('.quick-btn').forEach(btn =>
-  btn.addEventListener('click', () => sendCopilotMessage(btn.dataset.prompt))
-);
-
-// ── Panel System ─────────────────────────────────────────────
-function openPanel(id) {
-  closeAllPanels();
-  document.getElementById(`panel-${id}`)?.classList.add('open');
-  document.getElementById('backdrop').classList.add('visible');
-}
-function closeAllPanels() {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
-  document.getElementById('backdrop').classList.remove('visible');
-}
-document.querySelectorAll('.panel-close').forEach(btn =>
-  btn.addEventListener('click', () => closeAllPanels()));
-document.getElementById('backdrop').addEventListener('click', closeAllPanels);
-
-document.getElementById('btn-tabs').addEventListener('click', () => openPanel('tabs'));
-document.getElementById('btn-sgallery').addEventListener('click', () => openPanel('sgallery'));
-document.getElementById('btn-agents').addEventListener('click', () => openPanel('agents'));
-document.getElementById('btn-drop-item').addEventListener('click', () => {
-  const url = prompt('Enter URL or text to drop into your Universe:');
-  if (url) addImmediateItem(url);
-});
-
-// ── Modals ───────────────────────────────────────────────────
-function openModal(id) {
-  document.getElementById(id).classList.add('open');
-  document.getElementById('backdrop').classList.add('visible');
-}
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-  document.getElementById('backdrop').classList.remove('visible');
+function aiQuickAction(type) {
+  const chat = document.getElementById("ai-chat");
+  const typing = document.createElement("div");
+  typing.className = "ai-msg ai-msg-bot";
+  typing.innerHTML = `<span class="ai-avatar">🧠</span><span class="ai-typing">thinking…</span>`;
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+  setTimeout(() => {
+    typing.innerHTML = `<span class="ai-avatar">🧠</span><pre class="ai-pre">${AI_RESPONSES[type]}</pre>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 700);
 }
 
-// ── Search (Stract) ──────────────────────────────────────────
-document.getElementById('search-input').addEventListener('keydown', async (e) => {
-  if (e.key !== 'Enter') return;
-  const q = e.target.value.trim();
-  if (!q) return;
-  // Try local Stract, fallback to Brave
-  const stractUrl = `http://localhost:3000/search?q=${encodeURIComponent(q)}`;
-  try {
-    const res = await fetch(`http://localhost:3000/health`, { signal: AbortSignal.timeout(800) });
-    if (res.ok) { window.open(stractUrl, '_blank'); return; }
-  } catch {}
-  window.open(`https://search.brave.com/search?q=${encodeURIComponent(q)}`, '_blank');
-});
+// ── Agents Panel ──────────────────────────────────────────────
+function renderAgentsPanel() {
+  const panel = document.getElementById("agents-panel");
+  if (!panel) return;
+  panel.innerHTML = `
+    <div class="panel-header">
+      <span>🤖 Linkon Agents</span>
+      <button class="panel-close" onclick="togglePanel('agents-panel')">✕</button>
+    </div>
+    <div class="panel-note foss-note">All agents are free. Powered by OpenHands (open-source).</div>
+    <div class="integrations-grid">
+      <div class="integration-card" style="--int-color:#333">
+        <div class="int-icon">🐙</div>
+        <div class="int-name">GitHub</div>
+        <div class="int-detail">3 repos · 2 open PRs</div>
+        <button class="btn-sm btn-ghost" onclick="openIntegration('github')">Open</button>
+      </div>
+      <div class="integration-card" style="--int-color:#ff9f1c">
+        <div class="int-icon">🤗</div>
+        <div class="int-name">Hugging Face</div>
+        <div class="int-detail">5 models · 2 datasets</div>
+        <button class="btn-sm btn-ghost" onclick="openIntegration('hf')">Open</button>
+      </div>
+      <div class="integration-card" style="--int-color:#20beff">
+        <div class="int-icon">📊</div>
+        <div class="int-name">Kaggle</div>
+        <div class="int-detail">4 notebooks · 1 competition</div>
+        <button class="btn-sm btn-ghost" onclick="openIntegration('kaggle')">Open</button>
+      </div>
+    </div>
+    <div class="panel-section-title">Active Agents</div>
+    ${agents.map(a => `
+      <div class="agent-full-row">
+        <span class="agent-dot ${a.status}"></span>
+        <div class="agent-details">
+          <div class="agent-full-name">${a.name}</div>
+          <div class="agent-full-task">${a.task}</div>
+        </div>
+        <button class="btn-sm btn-ghost" onclick="toggleAgent('${a.id}')">
+          ${a.status === "running" ? "Pause" : "Start"}
+        </button>
+      </div>
+    `).join("")}
+    <button class="btn-primary btn-full" onclick="newAgent()">+ New Agent</button>
+  `;
+}
 
-// ── Service Status Checks ────────────────────────────────────
-async function checkServices() {
-  // Stract
-  try {
-    await fetch('http://localhost:3000/health', { signal: AbortSignal.timeout(1000) });
-    document.getElementById('stract-status').textContent = 'Online';
-    document.getElementById('stract-status').style.color = 'var(--green)';
-  } catch {
-    document.getElementById('stract-status').textContent = 'Offline (Brave fallback)';
-    document.getElementById('stract-status').style.color = 'var(--orange)';
+function toggleAgent(id) {
+  const a = agents.find(x => x.id === id);
+  if (!a) return;
+  a.status = a.status === "running" ? "idle" : "running";
+  renderAgentsPanel();
+}
+
+function openIntegration(type) {
+  const info = {
+    github: { icon:"🐙", name:"GitHub", items:["OnyxNeol/linkon-browser","OnyxNeol/terabites","OnyxNeol/stract-config"] },
+    hf:     { icon:"🤗", name:"Hugging Face", items:["codellama-7b-instruct","linkon-embeddings","linkon-dataset-v1","flan-t5-small","custom-model-1"] },
+    kaggle: { icon:"📊", name:"Kaggle", items:["Intro to ML","Titanic Survival","NLP Notebook","Vision Transformer"] },
+  };
+  const d = info[type];
+  showModal(`
+    <div class="modal-title">${d.icon} ${d.name}</div>
+    <div class="modal-list">
+      ${d.items.map(item => `<div class="modal-list-item">
+        <span>${item}</span>
+        <button class="btn-sm btn-ghost" onclick="addToGalaxyFromIntegration('${item}')">Add to Galaxy</button>
+      </div>`).join("")}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  `);
+}
+
+function addToGalaxyFromIntegration(item) {
+  closeModal();
+  const g = galaxies[0];
+  if (g) { g.items++; g.updated = "Just now"; }
+  renderGalaxyGrid();
+  renderStatsBar();
+}
+
+function newAgent() {
+  const names = ["Refactor Bot","Test Writer","Doc Generator","Dependency Checker","PR Reviewer"];
+  const name = names[Math.floor(Math.random() * names.length)];
+  agents.push({ id:"a" + Date.now(), name, status:"idle", task:"Ready to run…" });
+  renderAgentsPanel();
+}
+
+// ── Panel toggles ──────────────────────────────────────────────
+function bindPanelToggles() {
+  const toggles = {
+    "btn-tabs":     "tabs-panel",
+    "btn-sgallery": "sgallery-panel",
+    "btn-agents":   "agents-panel",
+  };
+  for (const [btnId, panelId] of Object.entries(toggles)) {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.addEventListener("click", () => togglePanel(panelId));
   }
-  // OpenHands
-  try {
-    await fetch('http://localhost:3000/health', { signal: AbortSignal.timeout(1000) });
-    document.getElementById('openhands-status').textContent = 'Online';
-    document.getElementById('openhands-status').style.color = 'var(--green)';
-  } catch {
-    document.getElementById('openhands-status').textContent = 'Offline';
-    document.getElementById('openhands-status').style.color = 'var(--text-dim)';
+
+  // AI panel toggle via floating button
+  const aiBtn = document.getElementById("ai-float-btn");
+  if (aiBtn) aiBtn.addEventListener("click", () => togglePanel("ai-panel"));
+}
+
+function togglePanel(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const visible = panel.style.display === "flex" || panel.style.display === "block";
+  // Close all panels
+  ["sgallery-panel","tabs-panel","agents-panel","ai-panel"].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) p.style.display = "none";
+  });
+  // Open target if it was hidden
+  if (!visible) panel.style.display = "flex";
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+function showModal(content) {
+  let modal = document.getElementById("linkon-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "linkon-modal";
+    document.body.appendChild(modal);
   }
+  modal.innerHTML = `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-box" onclick="event.stopPropagation()">
+        ${content}
+      </div>
+    </div>
+  `;
+  modal.style.display = "flex";
 }
 
-// ── Utils ────────────────────────────────────────────────────
-function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  if (diff < 60000) return 'just now';
-  if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
-  return `${Math.floor(diff/86400000)}d ago`;
+function closeModal() {
+  const modal = document.getElementById("linkon-modal");
+  if (modal) modal.style.display = "none";
 }
 
-// Make functions available globally
-window.selectGalaxy = selectGalaxy;
-window.toggleTabStatus = toggleTabStatus;
-window.launchSandbox = launchSandbox;
-window.stopSandbox = stopSandbox;
-
-// ── Boot ─────────────────────────────────────────────────────
-boot();
+// ── Utils ─────────────────────────────────────────────────────
+const sleep = ms => new Promise(r => setTimeout(r, ms));
