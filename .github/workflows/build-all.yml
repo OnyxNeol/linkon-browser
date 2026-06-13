@@ -14,11 +14,12 @@ on:
 
 jobs:
 
-  # ── Windows EXE ────────────────────────────────────────────
+  # ── WINDOWS ──────────────────────────────────────────────────
   build-windows:
     name: Windows EXE
     runs-on: windows-latest
     timeout-minutes: 40
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,10 +27,10 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          $v = if ("${{ github.event.inputs.version }}" -ne "") { "${{ github.event.inputs.version }}" }
-               elseif ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}".TrimStart("v") }
-               else { "1.0.0" }
-          echo "VERSION=$v" >> $env:GITHUB_OUTPUT
+          $v = "1.0.0"
+          if ("${{ github.event.inputs.version }}" -ne "") { $v = "${{ github.event.inputs.version }}" }
+          elseif ("${{ github.ref_type }}" -eq "tag") { $v = "${{ github.ref_name }}".TrimStart("v") }
+          echo "VERSION=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Install NSIS
         shell: pwsh
@@ -38,9 +39,9 @@ jobs:
       - name: Download Firefox ESR
         shell: pwsh
         run: |
-          Invoke-WebRequest `
-            -Uri "https://download.mozilla.org/?product=firefox-esr-latest&os=win64&lang=en-US" `
-            -OutFile "firefox-esr-setup.exe" -UseBasicParsing
+          $url = "https://download.mozilla.org/?product=firefox-esr-latest&os=win64&lang=en-US"
+          Invoke-WebRequest -Uri $url -OutFile "firefox-esr-setup.exe" -UseBasicParsing
+          Write-Host "Downloaded $([math]::Round((Get-Item firefox-esr-setup.exe).Length/1MB,1)) MB"
 
       - name: Extract Firefox ESR
         shell: pwsh
@@ -48,8 +49,9 @@ jobs:
           $dest = "${{ github.workspace }}\build\firefox-esr"
           New-Item -ItemType Directory -Force -Path $dest | Out-Null
           Start-Process -FilePath ".\firefox-esr-setup.exe" -ArgumentList "/S /D=$dest" -Wait -NoNewWindow
+          Write-Host "Extracted OK"
 
-      - name: Inject Linkon config + extension + skin
+      - name: Inject Linkon config and extension
         shell: pwsh
         run: |
           $ff = "${{ github.workspace }}\build\firefox-esr"
@@ -65,27 +67,70 @@ jobs:
           Compress-Archive -Path "$stage\*" -DestinationPath "$extDir\linkon-core@linkon.browser.xpi" -Force
           $chrome = "$ff\browser\defaults\profile\chrome"
           New-Item -ItemType Directory -Force -Path $chrome | Out-Null
-          Copy-Item "skin\chrome\userChrome.css"  "$chrome\userChrome.css"
+          Copy-Item "skin\chrome\userChrome.css" "$chrome\userChrome.css"
           Copy-Item "skin\chrome\userContent.css" "$chrome\userContent.css"
-          $userjs = 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);' + "`n"
-          $userjs += 'user_pref("browser.search.defaultenginename", "Linkon Search");' + "`n"
-          $userjs += 'user_pref("datareporting.healthreport.uploadEnabled", false);' + "`n"
-          $userjs += 'user_pref("toolkit.telemetry.enabled", false);' + "`n"
-          $userjs += 'user_pref("extensions.autoDisableScopes", 0);' + "`n"
-          $userjs += 'user_pref("extensions.enabledScopes", 15);' + "`n"
-          $userjs += 'user_pref("xpinstall.signatures.required", false);'
+          $userjs = @(
+            'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);',
+            'user_pref("browser.search.defaultenginename", "Linkon Search");',
+            'user_pref("datareporting.healthreport.uploadEnabled", false);',
+            'user_pref("toolkit.telemetry.enabled", false);',
+            'user_pref("extensions.autoDisableScopes", 0);',
+            'user_pref("extensions.enabledScopes", 15);',
+            'user_pref("xpinstall.signatures.required", false);'
+          )
           $userjs | Set-Content "$ff\browser\defaults\profile\user.js"
           Copy-Item "$ff\firefox.exe" "$ff\Linkon.exe"
+          Write-Host "All injections complete"
 
-      - name: Build NSIS installer
+      - name: Write NSIS script
         shell: pwsh
         run: |
-          $v = "${{ steps.ver.outputs.VERSION }}"
+          $v  = "${{ steps.ver.outputs.VERSION }}"
           $ff = "${{ github.workspace }}\build\firefox-esr"
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          $nsi = "Unicode True`nSetCompressor /SOLID lzma`nName `"Linkon Browser $v`"`nOutFile `"${{ github.workspace }}\dist\LinkonSetup-$v.exe`"`nInstallDir `"`$PROGRAMFILES64\Linkon Browser`"`nRequestExecutionLevel admin`nShowInstDetails show`n!include `"MUI2.nsh`"`n!define MUI_ABORTWARNING`n!insertmacro MUI_PAGE_WELCOME`n!insertmacro MUI_PAGE_DIRECTORY`n!insertmacro MUI_PAGE_INSTFILES`n!define MUI_FINISHPAGE_RUN `"`$INSTDIR\Linkon.exe`"`n!define MUI_FINISHPAGE_RUN_TEXT `"Launch Linkon Browser`"`n!insertmacro MUI_PAGE_FINISH`n!insertmacro MUI_UNPAGE_INSTFILES`n!insertmacro MUI_LANGUAGE `"English`"`nSection `"Linkon Browser`"`n  SetOutPath `"`$INSTDIR`"`n  File /r `"$ff\*.*`"`n  CreateShortCut `"`$DESKTOP\Linkon Browser.lnk`" `"`$INSTDIR\Linkon.exe`"`n  CreateDirectory `"`$SMPROGRAMS\Linkon Browser`"`n  CreateShortCut `"`$SMPROGRAMS\Linkon Browser\Linkon.lnk`" `"`$INSTDIR\Linkon.exe`"`n  WriteRegStr HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon`" `"DisplayName`" `"Linkon Browser`"`n  WriteUninstaller `"`$INSTDIR\uninstall.exe`"`nSectionEnd`nSection `"Uninstall`"`n  RMDir /r `"`$INSTDIR`"`n  Delete `"`$DESKTOP\Linkon Browser.lnk`"`n  DeleteRegKey HKLM `"Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon`"`nSectionEnd"
-          $nsi | Set-Content "build\installer.nsi" -Encoding UTF8
+          $out = "${{ github.workspace }}\dist"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $lines = @(
+            'Unicode True',
+            'SetCompressor /SOLID lzma',
+            "Name `"Linkon Browser $v`"",
+            "OutFile `"$out\LinkonSetup-$v.exe`"",
+            'InstallDir "$PROGRAMFILES64\Linkon Browser"',
+            'RequestExecutionLevel admin',
+            'ShowInstDetails show',
+            '!include "MUI2.nsh"',
+            '!define MUI_ABORTWARNING',
+            '!insertmacro MUI_PAGE_WELCOME',
+            '!insertmacro MUI_PAGE_DIRECTORY',
+            '!insertmacro MUI_PAGE_INSTFILES',
+            '!define MUI_FINISHPAGE_RUN "$INSTDIR\Linkon.exe"',
+            '!define MUI_FINISHPAGE_RUN_TEXT "Launch Linkon Browser"',
+            '!insertmacro MUI_PAGE_FINISH',
+            '!insertmacro MUI_UNPAGE_INSTFILES',
+            '!insertmacro MUI_LANGUAGE "English"',
+            'Section "Linkon Browser"',
+            '  SetOutPath "$INSTDIR"',
+            "  File /r `"$ff\*.*`"",
+            '  CreateShortCut "$DESKTOP\Linkon Browser.lnk" "$INSTDIR\Linkon.exe"',
+            '  CreateDirectory "$SMPROGRAMS\Linkon Browser"',
+            '  CreateShortCut "$SMPROGRAMS\Linkon Browser\Linkon.lnk" "$INSTDIR\Linkon.exe"',
+            '  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon" "DisplayName" "Linkon Browser"',
+            '  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon" "UninstallString" "$INSTDIR\uninstall.exe"',
+            '  WriteUninstaller "$INSTDIR\uninstall.exe"',
+            'SectionEnd',
+            'Section "Uninstall"',
+            '  RMDir /r "$INSTDIR"',
+            '  Delete "$DESKTOP\Linkon Browser.lnk"',
+            '  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon"',
+            'SectionEnd'
+          )
+          $lines | Set-Content "build\installer.nsi" -Encoding UTF8
+          Write-Host "NSIS script written"
+
+      - name: Build installer
+        shell: pwsh
+        run: |
           makensis "build\installer.nsi"
+          Write-Host "EXE built"
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -94,20 +139,21 @@ jobs:
           path: dist/LinkonSetup-*.exe
           retention-days: 30
 
-  # ── macOS DMG ──────────────────────────────────────────────
+  # ── MACOS ─────────────────────────────────────────────────────
   build-macos:
     name: macOS DMG
     runs-on: macos-latest
     timeout-minutes: 40
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set version
         id: ver
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then V="${{ github.event.inputs.version }}"
-          elif [ "${{ github.ref_type }}" = "tag" ]; then V="${{ github.ref_name }}"; V="${V#v}"
-          else V="1.0.0"; fi
+          V="1.0.0"
+          if [ -n "${{ github.event.inputs.version }}" ]; then V="${{ github.event.inputs.version }}"; fi
+          if [ "${{ github.ref_type }}" = "tag" ]; then V="${{ github.ref_name }}"; V="${V#v}"; fi
           echo "VERSION=$V" >> $GITHUB_OUTPUT
 
       - name: Install create-dmg
@@ -127,35 +173,43 @@ jobs:
 
       - name: Rebrand to Linkon.app
         run: |
-          V="${{ steps.ver.outputs.VERSION }}"
           cp -R "build/Firefox.app" "build/Linkon.app"
-          C="build/Linkon.app/Contents"
-          mv "$C/MacOS/firefox"     "$C/MacOS/linkon"     2>/dev/null || true
-          mv "$C/MacOS/firefox-bin" "$C/MacOS/linkon-bin" 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Set :CFBundleName Linkon"                   "$C/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Linkon Browser"    "$C/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier browser.linkon.app" "$C/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $V"         "$C/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable linkon"             "$C/Info.plist"
+          CONTENTS="build/Linkon.app/Contents"
+          V="${{ steps.ver.outputs.VERSION }}"
+          mv "$CONTENTS/MacOS/firefox" "$CONTENTS/MacOS/linkon" 2>/dev/null || true
+          mv "$CONTENTS/MacOS/firefox-bin" "$CONTENTS/MacOS/linkon-bin" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Set :CFBundleName Linkon" "$CONTENTS/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Linkon Browser" "$CONTENTS/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier browser.linkon.app" "$CONTENTS/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $V" "$CONTENTS/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable linkon" "$CONTENTS/Info.plist"
 
-      - name: Inject config + extension + skin
+      - name: Inject Linkon config and extension
         run: |
-          C="build/Linkon.app/Contents"
-          mkdir -p "$C/Resources/distribution"
-          cp browser-config/policies.json "$C/Resources/distribution/policies.json"
-          EXT="$C/Resources/browser/extensions"
-          mkdir -p "$EXT" build/xpi-stage
+          CONTENTS="build/Linkon.app/Contents"
+          mkdir -p "$CONTENTS/Resources/distribution"
+          cp browser-config/policies.json "$CONTENTS/Resources/distribution/policies.json"
+          EXT_DIR="$CONTENTS/Resources/browser/extensions"
+          mkdir -p "$EXT_DIR"
+          mkdir -p build/xpi-stage
           cp extension/manifest/manifest.json build/xpi-stage/
           cp -R extension/src build/xpi-stage/
-          cd build/xpi-stage && zip -r "../linkon-core.xpi" . && cd -
-          mv build/linkon-core.xpi "$EXT/linkon-core@linkon.browser.xpi"
-          CHROME="$C/Resources/browser/defaults/profile/chrome"
+          cd build/xpi-stage && zip -r ../linkon-core.xpi . && cd -
+          mv build/linkon-core.xpi "$EXT_DIR/linkon-core@linkon.browser.xpi"
+          CHROME="$CONTENTS/Resources/browser/defaults/profile/chrome"
           mkdir -p "$CHROME"
-          cp skin/chrome/userChrome.css  "$CHROME/"
+          cp skin/chrome/userChrome.css "$CHROME/"
           cp skin/chrome/userContent.css "$CHROME/"
-          printf 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);\nuser_pref("browser.search.defaultenginename", "Linkon Search");\nuser_pref("datareporting.healthreport.uploadEnabled", false);\nuser_pref("toolkit.telemetry.enabled", false);\nuser_pref("extensions.autoDisableScopes", 0);\nuser_pref("xpinstall.signatures.required", false);\n' > "$C/Resources/browser/defaults/profile/user.js"
+          USERJS="$CONTENTS/Resources/browser/defaults/profile/user.js"
+          printf '%s\n' \
+            'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);' \
+            'user_pref("browser.search.defaultenginename", "Linkon Search");' \
+            'user_pref("datareporting.healthreport.uploadEnabled", false);' \
+            'user_pref("toolkit.telemetry.enabled", false);' \
+            'user_pref("extensions.autoDisableScopes", 0);' \
+            'user_pref("xpinstall.signatures.required", false);' > "$USERJS"
 
-      - name: Sign + Build DMG
+      - name: Sign and build DMG
         run: |
           V="${{ steps.ver.outputs.VERSION }}"
           codesign --force --deep --sign "-" "build/Linkon.app"
@@ -164,11 +218,11 @@ jobs:
             --volname "Linkon Browser $V" \
             --window-pos 200 120 --window-size 800 400 \
             --icon-size 100 --icon "Linkon.app" 200 190 \
-            --app-drop-link 600 185 \
-            "dist/Linkon-$V.dmg" "build/Linkon.app" || \
-          hdiutil create -volname "Linkon Browser $V" \
-            -srcfolder build/Linkon.app -ov -format UDZO \
-            "dist/Linkon-$V.dmg"
+            --hide-extension "Linkon.app" --app-drop-link 600 185 \
+            "dist/Linkon-$V.dmg" "build/Linkon.app" \
+          || hdiutil create -volname "Linkon Browser $V" \
+              -srcfolder "build/Linkon.app" -ov -format UDZO \
+              "dist/Linkon-$V.dmg"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
@@ -177,131 +231,129 @@ jobs:
           path: dist/Linkon-*.dmg
           retention-days: 30
 
-  # ── Linux AppImage + tar.gz ────────────────────────────────
+  # ── LINUX ─────────────────────────────────────────────────────
   build-linux:
-    name: Linux AppImage
+    name: Linux AppImage and DEB
     runs-on: ubuntu-latest
     timeout-minutes: 40
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set version
         id: ver
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then V="${{ github.event.inputs.version }}"
-          elif [ "${{ github.ref_type }}" = "tag" ]; then V="${{ github.ref_name }}"; V="${V#v}"
-          else V="1.0.0"; fi
+          V="1.0.0"
+          if [ -n "${{ github.event.inputs.version }}" ]; then V="${{ github.event.inputs.version }}"; fi
+          if [ "${{ github.ref_type }}" = "tag" ]; then V="${{ github.ref_name }}"; V="${V#v}"; fi
           echo "VERSION=$V" >> $GITHUB_OUTPUT
 
       - name: Install dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libgtk-3-0 libdbus-glib-1-2 libxt6 libx11-xcb1 fuse libfuse2 patchelf
+          sudo apt-get install -y --no-install-recommends \
+            curl wget fakeroot dpkg-dev file libgtk-3-0 libdbus-glib-1-2
 
       - name: Download Firefox ESR
         run: |
-          wget -q "https://download.mozilla.org/?product=firefox-esr-latest&os=linux64&lang=en-US" \
-            -O firefox-esr.tar.bz2
+          curl -L "https://download.mozilla.org/?product=firefox-esr-latest&os=linux64&lang=en-US" \
+            -o firefox-esr.tar.bz2 --progress-bar
 
-      - name: Extract + rebrand
+      - name: Extract Firefox ESR
         run: |
-          mkdir -p build
-          tar -xjf firefox-esr.tar.bz2 -C build/
-          mv build/firefox build/linkon
-          mv build/linkon/firefox     build/linkon/linkon     2>/dev/null || true
-          mv build/linkon/firefox-bin build/linkon/linkon-bin 2>/dev/null || true
+          tar -xjf firefox-esr.tar.bz2 -C build/ 2>/dev/null || (mkdir -p build && tar -xjf firefox-esr.tar.bz2 -C build/)
 
-      - name: Inject config + extension + skin
+      - name: Inject Linkon config and extension
         run: |
-          mkdir -p build/linkon/distribution
-          cp browser-config/policies.json build/linkon/distribution/policies.json
-          cp browser-config/linkon.cfg build/linkon/linkon.cfg
-          printf 'pref("general.config.filename", "linkon.cfg");\npref("general.config.obscure_value", 0);\n' \
-            > build/linkon/defaults/pref/autoconfig.js
-          EXT="build/linkon/browser/extensions"
-          mkdir -p "$EXT" build/xpi-stage
+          FF="build/firefox"
+          mkdir -p "$FF/distribution"
+          cp browser-config/policies.json "$FF/distribution/policies.json"
+          EXT_DIR="$FF/browser/extensions"
+          mkdir -p "$EXT_DIR"
+          mkdir -p build/xpi-stage
           cp extension/manifest/manifest.json build/xpi-stage/
           cp -R extension/src build/xpi-stage/
-          cd build/xpi-stage && zip -r "../linkon-core.xpi" . && cd -
-          mv build/linkon-core.xpi "$EXT/linkon-core@linkon.browser.xpi"
-          CHROME="build/linkon/browser/defaults/profile/chrome"
+          cd build/xpi-stage && zip -r "../../$EXT_DIR/linkon-core@linkon.browser.xpi" . && cd -
+          CHROME="$FF/browser/defaults/profile/chrome"
           mkdir -p "$CHROME"
-          cp skin/chrome/userChrome.css  "$CHROME/"
+          cp skin/chrome/userChrome.css "$CHROME/"
           cp skin/chrome/userContent.css "$CHROME/"
-          printf 'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);\nuser_pref("browser.search.defaultenginename", "Linkon Search");\nuser_pref("datareporting.healthreport.uploadEnabled", false);\nuser_pref("toolkit.telemetry.enabled", false);\nuser_pref("extensions.autoDisableScopes", 0);\nuser_pref("xpinstall.signatures.required", false);\n' \
-            > build/linkon/browser/defaults/profile/user.js
-
-      - name: Build tar.gz
-        run: |
-          V="${{ steps.ver.outputs.VERSION }}"
-          mkdir -p dist
-          tar -czf "dist/Linkon-$V-linux-x86_64.tar.gz" -C build linkon
-          echo "Built: dist/Linkon-$V-linux-x86_64.tar.gz"
+          printf '%s\n' \
+            'user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);' \
+            'user_pref("browser.search.defaultenginename", "Linkon Search");' \
+            'user_pref("datareporting.healthreport.uploadEnabled", false);' \
+            'user_pref("toolkit.telemetry.enabled", false);' \
+            'user_pref("extensions.autoDisableScopes", 0);' \
+            'user_pref("xpinstall.signatures.required", false);' > "$FF/browser/defaults/profile/user.js"
+          cp "$FF/firefox" "$FF/linkon"
 
       - name: Build AppImage
         run: |
           V="${{ steps.ver.outputs.VERSION }}"
-          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" \
-            -O appimagetool && chmod +x appimagetool
+          mkdir -p dist
           APPDIR="build/Linkon.AppDir"
-          mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib"
-          cp -R build/linkon "$APPDIR/usr/lib/linkon"
-          ln -sf "../lib/linkon/linkon" "$APPDIR/usr/bin/linkon"
-          printf '#!/bin/bash\nHERE="$(dirname "$(readlink -f "$0")")"\nexec "$HERE/usr/lib/linkon/linkon" "$@"\n' \
-            > "$APPDIR/AppRun" && chmod +x "$APPDIR/AppRun"
-          printf '[Desktop Entry]\nName=Linkon Browser\nExec=linkon\nIcon=linkon\nType=Application\nCategories=Network;WebBrowser;\n' \
-            > "$APPDIR/linkon.desktop"
-          cp "build/linkon/browser/chrome/icons/default/default128.png" "$APPDIR/linkon.png" 2>/dev/null || \
-            wget -q "https://raw.githubusercontent.com/nicowillis/browser-icons/main/firefox.png" \
-              -O "$APPDIR/linkon.png" 2>/dev/null || dd if=/dev/urandom bs=1 count=67 2>/dev/null > "$APPDIR/linkon.png"
-          ARCH=x86_64 ./appimagetool "$APPDIR" "dist/Linkon-$V-x86_64.AppImage" 2>/dev/null || true
+          mkdir -p "$APPDIR/usr/lib/linkon"
+          cp -R build/firefox/. "$APPDIR/usr/lib/linkon/"
+          printf '#!/bin/bash\nSELF="$(dirname "$(readlink -f "$0")")"\nexec "$SELF/usr/lib/linkon/linkon" "$@"\n' > "$APPDIR/AppRun" 
+          chmod +x "$APPDIR/AppRun"
+          printf '[Desktop Entry]\nName=Linkon Browser\nExec=linkon %%u\nIcon=linkon\nType=Application\nCategories=Network;WebBrowser;\n' > "$APPDIR/linkon.desktop" 
+          wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" -O appimagetool
+          chmod +x appimagetool
+          ./appimagetool --appimage-extract-and-run "$APPDIR" "dist/Linkon-$V.AppImage" || \
+          (./appimagetool --appimage-extract && ./squashfs-root/AppRun "$APPDIR" "dist/Linkon-$V.AppImage")
+          chmod +x "dist/Linkon-$V.AppImage"
+
+      - name: Build DEB
+        run: |
+          V="${{ steps.ver.outputs.VERSION }}"
+          DEB="build/linkon-deb"
+          mkdir -p "$DEB/DEBIAN" "$DEB/usr/lib/linkon" "$DEB/usr/bin" "$DEB/usr/share/applications"
+          cp -R build/firefox/. "$DEB/usr/lib/linkon/"
+          printf '#!/bin/bash\nexec /usr/lib/linkon/linkon "$@"\n' > "$DEB/usr/bin/linkon"
+          chmod +x "$DEB/usr/bin/linkon"
+          printf '[Desktop Entry]\nName=Linkon Browser\nExec=/usr/bin/linkon %%u\nType=Application\nCategories=Network;WebBrowser;\n' > "$DEB/usr/share/applications/linkon.desktop"
+          printf 'Package: linkon-browser\nVersion: %s\nSection: web\nPriority: optional\nArchitecture: amd64\nMaintainer: TeraBites <hello@terabytes.dev>\nDescription: Linkon Browser\n A developer OS inside a browser.\nDepends: libgtk-3-0, libdbus-glib-1-2\n' "$V" > "$DEB/DEBIAN/control"
+          fakeroot dpkg-deb --build "$DEB" "dist/Linkon-$V.deb"
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Linkon-Linux-${{ steps.ver.outputs.VERSION }}
           path: |
-            dist/Linkon-*.tar.gz
             dist/Linkon-*.AppImage
+            dist/Linkon-*.deb
           retention-days: 30
 
-  # ── GitHub Release (on version tag) ───────────────────────
+  # ── RELEASE (on tag only) ──────────────────────────────────
   release:
-    name: Create Release
+    name: Create GitHub Release
     needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag'
+
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          path: dist/
+          path: release-artifacts
           merge-multiple: true
 
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           name: "Linkon Browser ${{ github.ref_name }}"
           body: |
-            ## ⬡ Linkon Browser ${{ github.ref_name }}
+            ## Linkon Browser ${{ github.ref_name }}
 
-            ### Downloads
-            | Platform | File |
+            A developer OS inside a browser. Firefox ESR + Stract + OpenHands.
+
+            | Platform | Download |
             |---|---|
-            | Windows | `LinkonSetup-*.exe` |
-            | macOS | `Linkon-*.dmg` |
-            | Linux | `Linkon-*-linux-x86_64.tar.gz` or `.AppImage` |
+            | Windows | LinkonSetup-*.exe |
+            | macOS   | Linkon-*.dmg |
+            | Linux   | Linkon-*.AppImage / Linkon-*.deb |
 
-            ### Five Pillars
-            - ❄️ Infinite Tabs (Freeze Mode + HAW)
-            - 🧠 Offline AI Copilot (Ollama + CodeLlama, zero cloud)
-            - ⚗️ S Gallery™ (Docker sandboxes, TB™)
-            - 🤖 Linkon Agents (OpenHands)
-            - 🌌 Linkon Universe (TeraBites auth + HF storage)
-
-            ### Backend (optional)
-            ```bash
-            docker-compose up -d
-            ```
-          files: dist/**/*
+            Start backend: docker-compose up -d
+          files: release-artifacts/**/*
           draft: false
           prerelease: false
