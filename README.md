@@ -3,6 +3,19 @@
 > **A developer's operating system inside a browser.**  
 > Free. Open-source. No accounts required. No charges. Ever.
 
+### ⬇️ Download
+
+| Platform | File | |
+|---|---|---|
+| 🪟 Windows | `LinkonSetup-1.0.0.exe` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/LinkonSetup-1.0.0.exe) |
+| 🍎 macOS | `Linkon-1.0.0.dmg` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.dmg) |
+| 🐧 Linux | `Linkon-1.0.0.AppImage` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.AppImage) |
+| 🐧 Linux | `Linkon-1.0.0.deb` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.deb) |
+
+> All builds are also available under [**Actions → Artifacts**](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml) if you don't see a release yet.
+
+---
+
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Build Linkon All Platforms](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml)
 [![Powered by Firefox ESR](https://img.shields.io/badge/Engine-Firefox_ESR-orange)](https://www.mozilla.org/en-US/firefox/enterprise/)
@@ -78,13 +91,7 @@ Linkon Browser
 ## Quick Start
 
 ### Option A — Download a build
-Go to [Releases](https://github.com/OnyxNeol/linkon-browser/releases) and grab the binary for your platform.
-
-| Platform | File |
-|---|---|
-| Windows | `LinkonSetup-*.exe` |
-| macOS | `Linkon-*.dmg` |
-| Linux | `Linkon-*.AppImage` or `Linkon-*.deb` |
+Grab the binary for your platform from the [**Download**](#️-download) section above or the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
 
 ### Option B — Build from source
 
