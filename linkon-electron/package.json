@@ -1,0 +1,63 @@
+{
+  "name": "linkon-browser",
+  "productName": "Linkon Browser",
+  "version": "1.0.0",
+  "description": "A developer OS inside a browser. Free. Open-source. MPL 2.0.",
+  "author": "TeraBites",
+  "license": "MPL-2.0",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win":   "electron-builder --win --x64",
+    "build:mac":   "electron-builder --mac --x64",
+    "build:linux": "electron-builder --linux --x64"
+  },
+  "build": {
+    "appId": "browser.linkon.app",
+    "productName": "Linkon Browser",
+    "copyright": "TeraBites – MPL 2.0",
+    "icon": "assets/linkon",
+    "asar": true,
+    "directories": { "output": "dist" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/linkon.ico",
+      "publisherName": "TeraBites"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "assets/linkon.ico",
+      "uninstallerIcon": "assets/linkon.ico",
+      "installerHeaderIcon": "assets/linkon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Linkon Browser"
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["x64"] }],
+      "icon": "assets/linkon.icns",
+      "category": "public.app-category.browsers",
+      "bundleVersion": "1.0.0",
+      "minimumSystemVersion": "10.15"
+    },
+    "dmg": {
+      "title": "Linkon Browser",
+      "icon": "assets/linkon.icns"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "assets/linkon-256.png",
+      "category": "Network;WebBrowser",
+      "executableName": "linkon",
+      "desktop": {
+        "StartupWMClass": "LinkonBrowser"
+      }
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

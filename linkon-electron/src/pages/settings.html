@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Linkon Settings</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #08000f; --bg2: #110020; --bg3: #1a003a;
+      --violet: #7c3aed; --cyan: #00d4ff;
+      --text: #e8e0ff; --muted: #7060a0; --border: #2a1a4a;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif;
+           padding: 32px; min-height: 100vh; }
+    h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    h2 { font-size: 1rem; font-weight: 700; color: var(--violet); margin: 28px 0 12px;
+         display: flex; align-items: center; gap: 8px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+            padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+    input[type=text], input[type=password] {
+      width: 100%; padding: 9px 12px; border-radius: 8px;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text); font-size: 13px; outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--violet); }
+    .row { display: flex; gap: 12px; }
+    .row > * { flex: 1; }
+    .btn { padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer;
+           font-size: 13px; font-weight: 600; transition: all 0.2s; }
+    .btn-primary { background: var(--violet); color: #fff; }
+    .btn-primary:hover { filter: brightness(1.15); }
+    .btn-secondary { background: var(--bg3); color: var(--muted); border: 1px solid var(--border); }
+    .btn-secondary:hover { color: var(--text); border-color: var(--violet); }
+    .status { font-size: 12px; color: var(--cyan); min-height: 18px; }
+    .note { font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .note a { color: var(--violet); }
+    .user-card { display: flex; align-items: center; gap: 14px; }
+    .user-card img { width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--violet); }
+    .user-info .name { font-weight: 700; font-size: 1rem; }
+    .user-info .prov { font-size: 12px; color: var(--muted); }
+    .provider-tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+                    border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .tag-github { background: #24292e; color: #fff; }
+    .tag-hf     { background: #ffcc00; color: #1a1a00; }
+    .tag-local  { background: var(--bg3); color: var(--muted); }
+    hr { border: none; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+  <h1>⚙ Settings</h1>
+  <div class="sub">Configure your Linkon Browser — everything is local, nothing is sent anywhere.</div>
+
+  <!-- Current account -->
+  <h2>👤 Account</h2>
+  <div class="card" id="account-card">
+    <div id="no-account" style="color:var(--muted);font-size:13px">Not logged in. <a href="#" onclick="document.getElementById('auth-section').scrollIntoView({behavior:'scroll'})">Set up login below ↓</a></div>
+  </div>
+
+  <!-- GitHub OAuth app credentials -->
+  <h2>🐙 GitHub OAuth App</h2>
+  <div class="card">
+    <div class="note">
+      Create a GitHub OAuth App at <a href="https://github.com/settings/developers" target="_blank">github.com/settings/developers</a><br/>
+      Set <strong>Authorization callback URL</strong> to: <code style="color:var(--cyan)">http://localhost:49821/oauth/callback</code>
+    </div>
+    <div class="row">
+      <div>
+        <label>Client ID</label>
+        <input type="text" id="gh-client-id" placeholder="Ghp_xxxxxxxxxxxx"/>
+      </div>
+      <div>
+        <label>Client Secret</label>
+        <input type="password" id="gh-client-secret" placeholder="••••••••••••••••••"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" onclick="saveGitHub()">Save GitHub Credentials</button>
+      <button class="btn btn-secondary" onclick="testGitHub()">Test Login</button>
+      <span class="status" id="gh-status"></span>
+    </div>
+  </div>
+
+  <!-- Hugging Face OAuth credentials -->
+  <h2>🤗 Hugging Face OAuth App</h2>
+  <div class="card">
+    <div class="note">
+      Create a HF OAuth app at <a href="https://huggingface.co/settings/applications" target="_blank">huggingface.co/settings/applications</a><br/>
+      Set <strong>Redirect URI</strong> to: <code style="color:var(--cyan)">http://localhost:49821/oauth/callback</code>
+    </div>
+    <div class="row">
+      <div>
+        <label>Client ID</label>
+        <input type="text" id="hf-client-id" placeholder="hf_xxxxxxxxxxxx"/>
+      </div>
+      <div>
+        <label>Client Secret</label>
+        <input type="password" id="hf-client-secret" placeholder="••••••••••••••••••"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" onclick="saveHF()">Save HF Credentials</button>
+      <button class="btn btn-secondary" onclick="testHF()">Test Login</button>
+      <span class="status" id="hf-status"></span>
+    </div>
+  </div>
+
+  <!-- Search engine -->
+  <h2>🔍 Search Engine</h2>
+  <div class="card">
+    <div class="note">Stract is the default (self-hosted, no Google). If you're running Stract locally, point to localhost.</div>
+    <div>
+      <label>Search URL (query appended after ?q=)</label>
+      <input type="text" id="search-url" value="https://stract.com/search?q=" placeholder="https://stract.com/search?q="/>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-primary" onclick="saveSearch()">Save</button>
+      <button class="btn btn-secondary" onclick="resetSearch()">Reset to Stract</button>
+      <span class="status" id="search-status"></span>
+    </div>
+  </div>
+
+  <!-- Logout -->
+  <h2>🚪 Logout</h2>
+  <div class="card">
+    <button class="btn btn-secondary" style="width:fit-content" onclick="logout()">Log out / Switch Account</button>
+  </div>
+
+  <script>
+    const AUTH_KEY = 'linkon_user';
+    const CRED_KEY = 'linkon_creds';
+
+    function getUser()  { try { return JSON.parse(localStorage.getItem(AUTH_KEY)||'null'); } catch { return null; } }
+    function getCreds() { try { return JSON.parse(localStorage.getItem(CRED_KEY)||'{}'); } catch { return {}; } }
+
+    // ── Render current account ───────────────────────────────────
+    const user = getUser();
+    if (user) {
+      const card = document.getElementById('account-card');
+      const tagClass = user.provider === 'github' ? 'tag-github' : user.provider === 'huggingface' ? 'tag-hf' : 'tag-local';
+      const tagLabel = user.provider === 'github' ? '🐙 GitHub' : user.provider === 'huggingface' ? '🤗 Hugging Face' : '💻 Local';
+      card.innerHTML = `
+        <div class="user-card">
+          ${user.avatar ? `<img src="${user.avatar}" alt="avatar"/>` : '<div style="width:48px;height:48px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>'}
+          <div class="user-info">
+            <div class="name">${user.name || user.username}</div>
+            <div class="prov">@${user.username}</div>
+            ${user.hfOrg ? `<div style="font-size:11px;color:var(--cyan);margin-top:2px">Universe: ${user.hfOrg}</div>` : ''}
+          </div>
+          <span class="provider-tag ${tagClass}">${tagLabel}</span>
+        </div>
+      `;
+      document.getElementById('no-account').remove();
+    }
+
+    // ── Pre-fill saved credentials ───────────────────────────────
+    const creds = getCreds();
+    if (creds.github)      { document.getElementById('gh-client-id').value = creds.github.clientId || ''; }
+    if (creds.huggingface) { document.getElementById('hf-client-id').value = creds.huggingface.clientId || ''; }
+    if (creds.searchUrl)   { document.getElementById('search-url').value   = creds.searchUrl; }
+
+    function saveGitHub() {
+      const id  = document.getElementById('gh-client-id').value.trim();
+      const sec = document.getElementById('gh-client-secret').value.trim();
+      if (!id || !sec) return setStatus('gh-status', 'Enter both Client ID and Secret');
+      const c = getCreds();
+      c.github = { clientId: id, clientSecret: sec };
+      localStorage.setItem(CRED_KEY, JSON.stringify(c));
+      setStatus('gh-status', '✓ Saved — restart Linkon to apply');
+    }
+
+    function saveHF() {
+      const id  = document.getElementById('hf-client-id').value.trim();
+      const sec = document.getElementById('hf-client-secret').value.trim();
+      if (!id || !sec) return setStatus('hf-status', 'Enter both Client ID and Secret');
+      const c = getCreds();
+      c.huggingface = { clientId: id, clientSecret: sec };
+      localStorage.setItem(CRED_KEY, JSON.stringify(c));
+      setStatus('hf-status', '✓ Saved — restart Linkon to apply');
+    }
+
+    function saveSearch() {
+      const url = document.getElementById('search-url').value.trim();
+      const c = getCreds();
+      c.searchUrl = url;
+      localStorage.setItem(CRED_KEY, JSON.stringify(c));
+      setStatus('search-status', '✓ Saved');
+    }
+    function resetSearch() {
+      document.getElementById('search-url').value = 'https://stract.com/search?q=';
+      saveSearch();
+    }
+
+    async function testGitHub() {
+      setStatus('gh-status', 'Opening GitHub login…');
+      try {
+        const u = await window.linkon.oauthLogin('github');
+        setStatus('gh-status', `✓ Logged in as ${u.name}`);
+      } catch(e) { setStatus('gh-status', '✗ ' + e.message); }
+    }
+    async function testHF() {
+      setStatus('hf-status', 'Opening Hugging Face login…');
+      try {
+        const u = await window.linkon.oauthLogin('huggingface');
+        setStatus('hf-status', `✓ Logged in as ${u.name}`);
+      } catch(e) { setStatus('hf-status', '✗ ' + e.message); }
+    }
+
+    function logout() {
+      localStorage.removeItem(AUTH_KEY);
+      location.reload();
+    }
+
+    function setStatus(id, msg) {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = msg; setTimeout(() => { el.textContent = ''; }, 6000); }
+    }
+  </script>
+</body>
+</html>

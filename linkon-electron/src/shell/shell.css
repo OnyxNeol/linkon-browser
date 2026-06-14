@@ -1,0 +1,215 @@
+/* ── Linkon Browser Shell — Cosmic UI ──────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #08000f;
+  --bg2:         #110020;
+  --bg3:         #1a003a;
+  --violet:      #7c3aed;
+  --violet-glow: #6e00ff;
+  --cyan:        #00d4ff;
+  --text:        #e8e0ff;
+  --text-muted:  #7060a0;
+  --border:      #2a1a4a;
+  --tab-h:       36px;
+  --nav-h:       44px;
+  --sidebar-w:   52px;
+  --radius:      8px;
+}
+
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+
+/* ── Titlebar ─────────────────────────────────────────────────── */
+#titlebar {
+  height: var(--tab-h);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  -webkit-app-region: drag;
+  user-select: none;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+}
+#drag-region { flex: 0 0 4px; }
+#logo-wrap { padding: 0 8px; display: flex; align-items: center; -webkit-app-region: no-drag; }
+#logo-img { width: 22px; height: 22px; border-radius: 5px; filter: drop-shadow(0 0 5px #6e00ffaa); }
+
+/* ── Tab strip ───────────────────────────────────────────────── */
+#tab-strip {
+  display: flex; flex: 1; overflow-x: auto; gap: 2px;
+  scrollbar-width: none; align-items: center; height: 100%;
+  -webkit-app-region: no-drag;
+}
+#tab-strip::-webkit-scrollbar { display: none; }
+
+.tab {
+  display: flex; align-items: center; gap: 6px;
+  height: 28px; padding: 0 10px 0 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px 6px 0 0; cursor: pointer;
+  max-width: 200px; min-width: 80px;
+  color: var(--text-muted); font-size: 12px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background 0.15s, color 0.15s;
+  -webkit-app-region: no-drag;
+}
+.tab.active { background: var(--bg3); border-bottom-color: var(--bg3); color: var(--text); }
+.tab:hover  { background: var(--bg3); color: var(--text); }
+.tab-title  { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.tab-close  { font-size: 11px; opacity: 0.5; padding: 2px 4px; border-radius: 4px; }
+.tab-close:hover { opacity: 1; background: #ff003320; color: #ff6060; }
+
+#btn-new-tab {
+  -webkit-app-region: no-drag;
+  background: none; border: none; color: var(--text-muted);
+  font-size: 18px; padding: 0 10px; cursor: pointer; height: 100%;
+  transition: color 0.15s;
+}
+#btn-new-tab:hover { color: var(--violet); }
+
+/* ── Window controls ─────────────────────────────────────────── */
+#win-controls {
+  display: flex; gap: 0; -webkit-app-region: no-drag;
+  margin-left: auto;
+}
+#win-controls button {
+  background: none; border: none; color: var(--text-muted);
+  width: 40px; height: var(--tab-h); font-size: 13px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+#win-controls button:hover  { background: #ffffff14; color: var(--text); }
+#btn-close:hover             { background: #e8112d !important; color: #fff !important; }
+
+/* ── Nav bar ─────────────────────────────────────────────────── */
+#navbar {
+  position: fixed; top: var(--tab-h); left: 0; right: 0;
+  height: var(--nav-h); background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 4px; padding: 0 8px;
+  z-index: 999;
+}
+.nav-btn {
+  background: none; border: none; color: var(--text-muted);
+  width: 34px; height: 34px; border-radius: var(--radius);
+  font-size: 16px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.nav-btn:hover { background: var(--bg3); color: var(--text); }
+.nav-btn.active { color: var(--violet); }
+
+#url-bar-wrap {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 20px; padding: 0 12px; height: 32px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#url-bar-wrap:focus-within {
+  border-color: var(--violet); box-shadow: 0 0 0 2px #6e00ff22;
+}
+#url-scheme-icon { font-size: 12px; opacity: 0.6; }
+#url-bar {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-size: 13px;
+}
+#url-bar::placeholder { color: var(--text-muted); }
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+#sidebar {
+  position: fixed;
+  top: calc(var(--tab-h) + var(--nav-h));
+  left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 0; gap: 4px; z-index: 998;
+  transition: width 0.2s;
+}
+.sb-btn {
+  background: none; border: none; color: var(--text-muted);
+  width: 40px; height: 40px; border-radius: var(--radius);
+  font-size: 18px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+.sb-btn:hover  { background: var(--bg3); color: var(--text); }
+.sb-btn.active { background: #6e00ff22; color: var(--violet); }
+
+/* ── Auth overlay ─────────────────────────────────────────────── */
+#auth-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+}
+#auth-bg {
+  position: absolute; inset: 0;
+  background-image: var(--auth-bg-url);
+  background-size: cover; background-position: center;
+  filter: brightness(0.45) saturate(1.4);
+}
+#auth-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 10%, #08000fcc 75%, #08000fff 100%);
+}
+#auth-card {
+  position: relative; z-index: 1;
+  background: linear-gradient(160deg, #1a003599 0%, #0d001ecc 100%);
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 2.4rem 2rem; width: 400px;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 0 80px #6e00ff44, 0 0 20px #00000099, inset 0 1px 0 #ffffff0a;
+  display: flex; flex-direction: column; align-items: center; gap: 1.4rem;
+}
+#auth-logo {
+  width: 96px; height: 96px; object-fit: contain; border-radius: 18px;
+  filter: drop-shadow(0 0 16px #6e00ffaa) drop-shadow(0 0 6px #00d4ff66);
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+@keyframes logo-pulse {
+  0%,100% { filter: drop-shadow(0 0 16px #6e00ffaa) drop-shadow(0 0 6px #00d4ff66); }
+  50%      { filter: drop-shadow(0 0 28px #9b4dffcc) drop-shadow(0 0 12px #00d4ffaa); }
+}
+#auth-title   { font-size: 1.5rem; font-weight: 800; letter-spacing: 0.06em; color: var(--text); }
+#auth-tagline { font-size: 0.82rem; color: var(--text-muted); text-align: center; line-height: 1.5; }
+#auth-buttons { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+
+.auth-btn {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  width: 100%; height: 48px; border-radius: 12px;
+  border: 1px solid var(--border); font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; text-decoration: none;
+}
+.auth-btn-github {
+  background: #24292e; color: #fff; border-color: #444;
+}
+.auth-btn-github:hover { background: #333; box-shadow: 0 0 20px #6e00ff44; transform: translateY(-1px); }
+.auth-btn-hf {
+  background: linear-gradient(135deg, #ff9d00, #ffcc00);
+  color: #1a1a00; border-color: #ffcc00;
+}
+.auth-btn-hf:hover { filter: brightness(1.1); box-shadow: 0 0 20px #ffcc0044; transform: translateY(-1px); }
+.auth-btn-local {
+  background: none; color: var(--text-muted); border-color: #2a1a4a;
+  font-size: 13px;
+}
+.auth-btn-local:hover { color: var(--text); border-color: var(--violet); }
+
+.auth-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+#auth-status { font-size: 12px; color: var(--violet); min-height: 16px; text-align: center; }
+#auth-foss   { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.6; }
+
+/* ── Profile pill (top-right when logged in) ─────────────────── */
+#profile-pill {
+  position: fixed; top: 6px; right: 132px; z-index: 1001;
+  display: none; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 20px; padding: 3px 10px 3px 4px;
+  cursor: pointer; -webkit-app-region: no-drag;
+  transition: border-color 0.2s;
+}
+#profile-pill:hover { border-color: var(--violet); }
+#profile-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+#profile-name   { font-size: 12px; font-weight: 600; color: var(--text); }
+#profile-badge  { font-size: 10px; color: var(--text-muted); }
