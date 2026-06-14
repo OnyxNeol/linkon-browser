@@ -203,14 +203,17 @@ jobs:
           # Rename executables if present
           [ -f "$C/MacOS/firefox"     ] && mv "$C/MacOS/firefox"     "$C/MacOS/linkon"
           [ -f "$C/MacOS/firefox-bin" ] && mv "$C/MacOS/firefox-bin" "$C/MacOS/linkon-bin"
-          # Update Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleName Linkon"                   "$C/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName Linkon Browser"    "$C/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier browser.linkon.app" "$C/Info.plist"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $V"         "$C/Info.plist"
-          # Only update CFBundleExecutable if the binary was renamed
+          # Update Info.plist — use Set with Add fallback for each key
+          plist_set() {
+            key="$1"; val="$2"; type="${3:-string}"
+            /usr/libexec/PlistBuddy -c "Set $key $val" "$C/Info.plist" 2>/dev/null               || /usr/libexec/PlistBuddy -c "Add $key $type $val" "$C/Info.plist"
+          }
+          plist_set ":CFBundleName"              "Linkon"
+          plist_set ":CFBundleDisplayName"       "Linkon Browser"
+          plist_set ":CFBundleIdentifier"        "browser.linkon.app"
+          plist_set ":CFBundleShortVersionString" "$V"
           if [ -f "$C/MacOS/linkon" ]; then
-            /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable linkon" "$C/Info.plist"
+            plist_set ":CFBundleExecutable" "linkon"
           fi
           echo "Rebranded to Linkon.app"
           ls "$C/MacOS/"
@@ -295,18 +298,26 @@ jobs:
       - name: Download Firefox ESR (Linux)
         run: |
           echo "Downloading Firefox ESR for Linux..."
-          wget -q --show-progress \
-            "https://download.mozilla.org/?product=firefox-esr-latest&os=linux64&lang=en-US" \
-            -O firefox-esr.tar.bz2
+          # Follow redirects explicitly with curl to get the actual bz2
+          FF_URL=$(curl -sI             "https://download.mozilla.org/?product=firefox-esr-latest&os=linux64&lang=en-US"             | grep -i "^location:" | tail -1 | tr -d '\r' | awk "{print \$2}")
+          echo "Resolved URL: $FF_URL"
+          curl -L --progress-bar "$FF_URL" -o firefox-esr.tar.bz2
+          file firefox-esr.tar.bz2
           echo "Size: $(du -sh firefox-esr.tar.bz2 | cut -f1)"
 
       - name: Extract Firefox ESR
         run: |
           mkdir -p build
-          tar -xjf firefox-esr.tar.bz2 -C build/
-          # The archive extracts to build/firefox/
+          file firefox-esr.tar.bz2
+          tar -xjf firefox-esr.tar.bz2 -C build/ --checkpoint=5000
           ls build/
-          echo "Firefox dir: $(ls build/firefox/ | head -5)"
+          FF_DIR=$(find build -maxdepth 1 -type d -name "firefox*" | head -1)
+          echo "Firefox dir: $FF_DIR"
+          ls "$FF_DIR" | head -10
+          # Normalize to build/firefox
+          if [ "$FF_DIR" != "build/firefox" ] && [ -n "$FF_DIR" ]; then
+            mv "$FF_DIR" build/firefox
+          fi
 
       - name: Inject Linkon skin and extension
         run: |
