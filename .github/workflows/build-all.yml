@@ -36,39 +36,71 @@ jobs:
           echo "VERSION=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           Write-Host "Building version: $v"
 
-      - name: Install NSIS
+      - name: Install tools
         shell: pwsh
         run: |
           choco install nsis --yes --no-progress
-          $nsispath = "C:\Program Files (x86)\NSIS\makensis.exe"
-          if (Test-Path $nsispath) { Write-Host "NSIS found at $nsispath" }
-          else { Write-Error "NSIS not found!" }
+          choco install rcedit --yes --no-progress
+          # rcedit is used to replace the icon in firefox.exe
+          $rcPath = Get-ChildItem "C:\ProgramData\chocolatey\bin\rcedit*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($rcPath) { Write-Host "rcedit: $rcPath" }
+          else {
+            # Fallback: download rcedit directly
+            Invoke-WebRequest -Uri "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe" `
+              -OutFile "C:\tools\rcedit.exe" -UseBasicParsing -ErrorAction SilentlyContinue
+            New-Item -ItemType Directory -Force -Path "C:\tools" | Out-Null
+            Invoke-WebRequest -Uri "https://github.com/electron/rcedit/releases/download/v2.0.0/rcedit-x64.exe" `
+              -OutFile "C:\tools\rcedit.exe" -UseBasicParsing
+            Write-Host "rcedit downloaded to C:\tools\rcedit.exe"
+          }
 
-      - name: Download Firefox ESR (Windows)
+      - name: Download and install Firefox ESR (Windows)
         shell: pwsh
         run: |
           $url = "https://download.mozilla.org/?product=firefox-esr-latest&os=win64&lang=en-US"
-          Write-Host "Downloading Firefox ESR for Windows..."
+          Write-Host "Downloading Firefox ESR..."
           Invoke-WebRequest -Uri $url -OutFile "firefox-installer.exe" -UseBasicParsing
-          $size = [math]::Round((Get-Item "firefox-installer.exe").Length / 1MB, 1)
-          Write-Host "Downloaded: $size MB"
-
-      - name: Install Firefox ESR silently
-        shell: pwsh
-        run: |
           $dest = "${{ github.workspace }}\build\firefox-esr"
           New-Item -ItemType Directory -Force -Path $dest | Out-Null
-          Write-Host "Installing Firefox ESR to $dest ..."
           $proc = Start-Process -FilePath ".\firefox-installer.exe" `
             -ArgumentList "/S /D=$dest" -Wait -PassThru -NoNewWindow
-          Write-Host "Exit code: $($proc.ExitCode)"
-          if (Test-Path "$dest\firefox.exe") {
-            Write-Host "firefox.exe found"
-          } else {
-            Write-Host "Listing build dir:"
-            Get-ChildItem "${{ github.workspace }}\build" -Recurse -Depth 2 | Select-Object FullName
+          Write-Host "Install exit code: $($proc.ExitCode)"
+          if (-not (Test-Path "$dest\firefox.exe")) {
             Write-Error "firefox.exe not found after install"
+          } else {
+            Write-Host "firefox.exe found — $(([System.IO.FileInfo]"$dest\firefox.exe").Length / 1MB) MB"
           }
+
+      - name: Replace icon + rename to linkon.exe
+        shell: pwsh
+        run: |
+          $ff   = "${{ github.workspace }}\build\firefox-esr"
+          $ico  = "${{ github.workspace }}\skin\chrome\linkon.ico"
+
+          # ── 1. Use rcedit to swap the icon in firefox.exe ─────────
+          $rcedit = Get-ChildItem "C:\ProgramData\chocolatey\bin\rcedit*.exe" -ErrorAction SilentlyContinue |
+                    Select-Object -First 1 -ExpandProperty FullName
+          if (-not $rcedit) { $rcedit = "C:\tools\rcedit.exe" }
+          Write-Host "Using rcedit: $rcedit"
+
+          # Set icon and version strings on firefox.exe
+          & $rcedit "$ff\firefox.exe" `
+            --set-icon "$ico" `
+            --set-version-string "ProductName" "Linkon Browser" `
+            --set-version-string "FileDescription" "Linkon Browser" `
+            --set-version-string "CompanyName" "TeraBites" `
+            --set-version-string "LegalCopyright" "MPL 2.0 - TeraBites" `
+            --set-file-version "${{ steps.ver.outputs.VERSION }}.0" `
+            --set-product-version "${{ steps.ver.outputs.VERSION }}.0"
+          Write-Host "Icon and version strings replaced in firefox.exe"
+
+          # ── 2. Rename firefox.exe → linkon.exe ────────────────────
+          Rename-Item "$ff\firefox.exe" "$ff\linkon.exe" -Force
+          # Also rename firefox-bin if it exists
+          if (Test-Path "$ff\firefox-bin.exe") {
+            Rename-Item "$ff\firefox-bin.exe" "$ff\linkon-bin.exe" -Force
+          }
+          Write-Host "Renamed to linkon.exe ✓"
 
       - name: Inject Linkon skin and extension
         shell: pwsh
@@ -106,6 +138,7 @@ jobs:
           $v   = "${{ steps.ver.outputs.VERSION }}"
           $ff  = "${{ github.workspace }}\build\firefox-esr"
           $out = "${{ github.workspace }}\dist"
+          $ico = "${{ github.workspace }}\skin\chrome\linkon.ico"
           New-Item -ItemType Directory -Force -Path $out | Out-Null
           $nsiLines = @(
             'Unicode True',
@@ -117,10 +150,12 @@ jobs:
             'ShowInstDetails show',
             '!include "MUI2.nsh"',
             '!define MUI_ABORTWARNING',
+            "!define MUI_ICON `"$ico`"",
+            "!define MUI_UNICON `"$ico`"",
             '!insertmacro MUI_PAGE_WELCOME',
             '!insertmacro MUI_PAGE_DIRECTORY',
             '!insertmacro MUI_PAGE_INSTFILES',
-            '!define MUI_FINISHPAGE_RUN "$INSTDIR\firefox.exe"',
+            '!define MUI_FINISHPAGE_RUN "$INSTDIR\linkon.exe"',
             '!define MUI_FINISHPAGE_RUN_TEXT "Launch Linkon Browser"',
             '!insertmacro MUI_PAGE_FINISH',
             '!insertmacro MUI_UNPAGE_INSTFILES',
@@ -128,14 +163,17 @@ jobs:
             'Section "Linkon Browser"',
             '  SetOutPath "$INSTDIR"',
             "  File /r `"$ff\*.*`"",
-            '  CreateShortCut "$DESKTOP\Linkon Browser.lnk" "$INSTDIR\firefox.exe"',
+            "  CreateShortCut `"$DESKTOP\Linkon Browser.lnk`" `"$INSTDIR\linkon.exe`" `"`" `"$ico`"",
+            '  CreateShortCut "$SMPROGRAMS\Linkon Browser.lnk" "$INSTDIR\linkon.exe"',
             '  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon" "DisplayName" "Linkon Browser"',
             '  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon" "UninstallString" "$INSTDIR\uninstall.exe"',
+            '  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon" "DisplayIcon" "$INSTDIR\linkon.exe"',
             '  WriteUninstaller "$INSTDIR\uninstall.exe"',
             'SectionEnd',
             'Section "Uninstall"',
             '  RMDir /r "$INSTDIR"',
             '  Delete "$DESKTOP\Linkon Browser.lnk"',
+            '  Delete "$SMPROGRAMS\Linkon Browser.lnk"',
             '  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Linkon"',
             'SectionEnd'
           )
@@ -176,8 +214,11 @@ jobs:
           echo "VERSION=$V" >> $GITHUB_OUTPUT
           echo "Building version: $V"
 
-      - name: Install create-dmg
-        run: brew install create-dmg
+      - name: Install tools
+        run: |
+          brew install create-dmg
+          # png2icns is in libicns
+          brew install libicns || true
 
       - name: Download Firefox ESR (macOS)
         run: |
@@ -185,7 +226,7 @@ jobs:
           curl -L --progress-bar \
             "https://download.mozilla.org/?product=firefox-esr-latest&os=osx&lang=en-US" \
             -o firefox-esr.dmg
-          echo "Size: $(du -sh firefox-esr.dmg | cut -f1)"
+          echo "Downloaded: $(du -sh firefox-esr.dmg | cut -f1)"
 
       - name: Mount and copy Firefox.app
         run: |
@@ -193,29 +234,66 @@ jobs:
           hdiutil attach firefox-esr.dmg -mountpoint build/mnt -quiet -nobrowse -readonly
           cp -R "build/mnt/Firefox.app" "build/Firefox.app"
           hdiutil detach build/mnt -quiet
-          echo "Copied Firefox.app ($(du -sh build/Firefox.app | cut -f1))"
+          echo "Firefox.app size: $(du -sh build/Firefox.app | cut -f1)"
 
-      - name: Rebrand to Linkon.app
+      - name: Rebrand to Linkon.app — rename + replace icon
         run: |
           V="${{ steps.ver.outputs.VERSION }}"
           cp -R "build/Firefox.app" "build/Linkon.app"
           C="build/Linkon.app/Contents"
-          # Rename executables if present
+
+          # ── 1. Rename executables ─────────────────────────────────
           [ -f "$C/MacOS/firefox"     ] && mv "$C/MacOS/firefox"     "$C/MacOS/linkon"
           [ -f "$C/MacOS/firefox-bin" ] && mv "$C/MacOS/firefox-bin" "$C/MacOS/linkon-bin"
-          # Update Info.plist — use Set with Add fallback for each key
+
+          # ── 2. Update Info.plist (Set with Add fallback) ──────────
           plist_set() {
             key="$1"; val="$2"; type="${3:-string}"
-            /usr/libexec/PlistBuddy -c "Set $key $val" "$C/Info.plist" 2>/dev/null               || /usr/libexec/PlistBuddy -c "Add $key $type $val" "$C/Info.plist"
+            /usr/libexec/PlistBuddy -c "Set $key $val" "$C/Info.plist" 2>/dev/null \
+              || /usr/libexec/PlistBuddy -c "Add $key $type $val" "$C/Info.plist"
           }
-          plist_set ":CFBundleName"              "Linkon"
-          plist_set ":CFBundleDisplayName"       "Linkon Browser"
-          plist_set ":CFBundleIdentifier"        "browser.linkon.app"
+          plist_set ":CFBundleName"               "Linkon"
+          plist_set ":CFBundleDisplayName"        "Linkon Browser"
+          plist_set ":CFBundleIdentifier"         "browser.linkon.app"
           plist_set ":CFBundleShortVersionString" "$V"
           if [ -f "$C/MacOS/linkon" ]; then
             plist_set ":CFBundleExecutable" "linkon"
           fi
-          echo "Rebranded to Linkon.app"
+          # Point the icon key to our new icon file name
+          plist_set ":CFBundleIconFile" "linkon"
+
+          # ── 3. Replace the .icns icon ─────────────────────────────
+          ICNS_DIR="$C/Resources"
+          LOGO="skin/chrome/linkon-512.png"
+
+          # Try png2icns (from libicns)
+          if command -v png2icns >/dev/null 2>&1; then
+            # Need multiple sizes for a proper icns
+            mkdir -p /tmp/icns-stage
+            for s in 16 32 64 128 256 512; do
+              sips -z $s $s "$LOGO" --out "/tmp/icns-stage/icon_${s}x${s}.png" 2>/dev/null
+            done
+            png2icns "/tmp/linkon.icns" /tmp/icns-stage/*.png 2>/dev/null \
+              && cp /tmp/linkon.icns "$ICNS_DIR/linkon.icns" \
+              && echo "Icon set via png2icns ✓"
+          fi
+
+          # Fallback: use iconutil (macOS native)
+          if [ ! -f "$ICNS_DIR/linkon.icns" ]; then
+            mkdir -p /tmp/linkon.iconset
+            for s in 16 32 64 128 256 512; do
+              sips -z $s $s "$LOGO" --out "/tmp/linkon.iconset/icon_${s}x${s}.png" 2>/dev/null
+              sips -z $((s*2)) $((s*2)) "$LOGO" --out "/tmp/linkon.iconset/icon_${s}x${s}@2x.png" 2>/dev/null
+            done
+            iconutil -c icns /tmp/linkon.iconset -o "$ICNS_DIR/linkon.icns"
+            echo "Icon set via iconutil ✓"
+          fi
+
+          # Remove old Firefox icons so the OS picks up ours
+          find "$ICNS_DIR" -name "firefox*.icns" -delete
+          find "$ICNS_DIR" -name "*.icns" ! -name "linkon.icns" -delete
+
+          echo "Rebranded to Linkon.app ✓"
           ls "$C/MacOS/"
 
       - name: Inject Linkon skin and extension
@@ -249,7 +327,6 @@ jobs:
         run: |
           V="${{ steps.ver.outputs.VERSION }}"
           mkdir -p dist
-          # Try create-dmg first, fall back to hdiutil
           create-dmg \
             --volname "Linkon Browser $V" \
             --window-pos 200 120 --window-size 800 400 \
@@ -298,26 +375,50 @@ jobs:
       - name: Download Firefox ESR (Linux)
         run: |
           echo "Downloading Firefox ESR for Linux..."
-          # Follow redirects explicitly with curl to get the actual bz2
-          FF_URL=$(curl -sI             "https://download.mozilla.org/?product=firefox-esr-latest&os=linux64&lang=en-US"             | grep -i "^location:" | tail -1 | tr -d '\r' | awk "{print \$2}")
+          FF_URL=$(curl -sIL \
+            "https://download.mozilla.org/?product=firefox-esr-latest&os=linux64&lang=en-US" \
+            | grep -i "^location:" | tail -1 | tr -d '\r' | awk '{print $2}')
           echo "Resolved URL: $FF_URL"
           curl -L --progress-bar "$FF_URL" -o firefox-esr.tar.bz2
-          file firefox-esr.tar.bz2
-          echo "Size: $(du -sh firefox-esr.tar.bz2 | cut -f1)"
+          echo "Downloaded: $(du -sh firefox-esr.tar.bz2 | cut -f1)"
 
       - name: Extract Firefox ESR
         run: |
           mkdir -p build
-          file firefox-esr.tar.bz2
           tar -xjf firefox-esr.tar.bz2 -C build/ --checkpoint=5000
-          ls build/
+          # Archive extracts to build/firefox/
           FF_DIR=$(find build -maxdepth 1 -type d -name "firefox*" | head -1)
-          echo "Firefox dir: $FF_DIR"
-          ls "$FF_DIR" | head -10
-          # Normalize to build/firefox
-          if [ "$FF_DIR" != "build/firefox" ] && [ -n "$FF_DIR" ]; then
-            mv "$FF_DIR" build/firefox
-          fi
+          echo "Found: $FF_DIR"
+          ls "$FF_DIR" | head -5
+          [ "$FF_DIR" != "build/firefox" ] && mv "$FF_DIR" build/firefox || true
+          echo "firefox binary: $(ls build/firefox/firefox* 2>/dev/null)"
+
+      - name: Replace icon + rename to linkon
+        run: |
+          FF="build/firefox"
+
+          # ── 1. Replace icons with our logo ────────────────────────
+          ICON_DIRS=(
+            "$FF/browser/chrome/icons/default"
+            "$FF/icons"
+          )
+          for dir in "${ICON_DIRS[@]}"; do
+            if [ -d "$dir" ]; then
+              for size in 16 32 48 64 128 256; do
+                src="skin/chrome/linkon-${size}.png"
+                [ -f "$src" ] && for f in "$dir"/default${size}.png "$dir"/*.png; do
+                  [ -f "$f" ] && cp "$src" "$f" && echo "Replaced icon in $f"
+                done
+              done
+            fi
+          done
+
+          # ── 2. Create linkon wrapper script (calls firefox binary) ─
+          # We keep firefox binary as-is (renaming breaks Gecko profile paths)
+          # Instead create a 'linkon' launcher script that sets the app name
+          printf '#!/bin/bash\nHERE="$(dirname "$(readlink -f \"$0\")")"\nexec "$HERE/firefox" --class=LinkonBrowser --name=LinkonBrowser "$@"\n' > "$FF/linkon" 
+          chmod +x "$FF/linkon"
+          echo "Linkon launcher created ✓"
 
       - name: Inject Linkon skin and extension
         run: |
@@ -347,34 +448,39 @@ jobs:
         run: |
           V="${{ steps.ver.outputs.VERSION }}"
           mkdir -p dist
+
           # Download appimagetool
           wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" \
             -O appimagetool
           chmod +x appimagetool
+
           # Build AppDir
           APPDIR="build/Linkon.AppDir"
           mkdir -p "$APPDIR/usr/lib/linkon"
           cp -R build/firefox/. "$APPDIR/usr/lib/linkon/"
-          # AppRun script
-          printf '#!/bin/bash\nHERE="$(dirname "$(readlink -f "$0")")"\nexec "$HERE/usr/lib/linkon/firefox" "$@"\n' > "$APPDIR/AppRun" 
+
+          # AppRun — uses our linkon launcher
+          printf '#!/bin/bash\nHERE="$(dirname "$(readlink -f "$0")")"\nexec "$HERE/usr/lib/linkon/linkon" "$@"\n' > "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
-          # Desktop entry
-          printf '[Desktop Entry]\nName=Linkon Browser\nExec=firefox %%u\nIcon=linkon\nType=Application\nCategories=Network;WebBrowser;\n' > "$APPDIR/linkon.desktop" 
-          # Icon
-          cp "build/firefox/browser/chrome/icons/default/default128.png" "$APPDIR/linkon.png" 2>/dev/null \
-            || wget -q "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Firefox_logo%2C_2019.svg/128px-Firefox_logo%2C_2019.svg.png" \
-               -O "$APPDIR/linkon.png" 2>/dev/null \
-            || convert -size 128x128 xc:#6e00ff "$APPDIR/linkon.png" 2>/dev/null \
-            || printf '\x89PNG\r\n' > "$APPDIR/linkon.png"
-          # Build AppImage
-          ARCH=x86_64 ./appimagetool --appimage-extract-and-run "$APPDIR" "dist/Linkon-$V-x86_64.AppImage" 2>&1 || true
+
+          # Desktop entry — name shows Linkon Browser
+          printf '[Desktop Entry]\nName=Linkon Browser\nExec=linkon %%u\nIcon=linkon\nType=Application\nCategories=Network;WebBrowser;\nStartupWMClass=LinkonBrowser\n' \
+            > "$APPDIR/linkon.desktop"
+
+          # Use our logo as the AppImage icon
+          cp "skin/chrome/linkon-256.png" "$APPDIR/linkon.png" 2>/dev/null \
+            || cp "skin/chrome/linkon-128.png" "$APPDIR/linkon.png"
+
+          # Build
+          ARCH=x86_64 ./appimagetool --appimage-extract-and-run \
+            "$APPDIR" "dist/Linkon-$V-x86_64.AppImage" 2>&1 || true
+
           if [ -f "dist/Linkon-$V-x86_64.AppImage" ]; then
             chmod +x "dist/Linkon-$V-x86_64.AppImage"
-            echo "AppImage built: $(du -sh dist/Linkon-$V-x86_64.AppImage | cut -f1)"
+            echo "AppImage: $(du -sh dist/Linkon-$V-x86_64.AppImage | cut -f1)"
           else
-            echo "AppImage build failed, creating tar.gz fallback..."
+            echo "AppImage fallback — tar.gz"
             tar -czf "dist/Linkon-$V-linux-x86_64.tar.gz" -C build firefox
-            echo "tar.gz built: $(du -sh dist/Linkon-$V-linux-x86_64.tar.gz | cut -f1)"
           fi
 
       - name: Build DEB package
@@ -382,14 +488,31 @@ jobs:
           V="${{ steps.ver.outputs.VERSION }}"
           DEB="build/linkon-deb"
           mkdir -p "$DEB/DEBIAN" "$DEB/usr/lib/linkon" "$DEB/usr/bin" \
-            "$DEB/usr/share/applications" "$DEB/usr/share/pixmaps"
+            "$DEB/usr/share/applications" "$DEB/usr/share/pixmaps" \
+            "$DEB/usr/share/icons/hicolor/128x128/apps" \
+            "$DEB/usr/share/icons/hicolor/256x256/apps"
+
           cp -R build/firefox/. "$DEB/usr/lib/linkon/"
-          printf '#!/bin/bash\nexec /usr/lib/linkon/firefox "$@"\n' > "$DEB/usr/bin/linkon" 
+
+          # Launcher — calls our linkon script inside /usr/lib/linkon
+          printf '#!/bin/bash\nexec /usr/lib/linkon/linkon "$@"\n' \
+            > "$DEB/usr/bin/linkon"
           chmod +x "$DEB/usr/bin/linkon"
-          printf '[Desktop Entry]\nName=Linkon Browser\nExec=linkon %%u\nIcon=linkon\nType=Application\nCategories=Network;WebBrowser;\n' > "$DEB/usr/share/applications/linkon.desktop" 
-          printf 'Package: linkon-browser\nVersion: %s\nSection: web\nPriority: optional\nArchitecture: amd64\nMaintainer: TeraBites <hello@terabytes.dev>\nDescription: Linkon Browser\n A developer OS inside a browser. Free. Open-source. MPL 2.0.\nDepends: libgtk-3-0, libdbus-glib-1-2\n' "$V" > "$DEB/DEBIAN/control" 
+
+          # Desktop entry with correct icon + WM class
+          printf '[Desktop Entry]\nName=Linkon Browser\nExec=linkon %%u\nIcon=linkon\nType=Application\nCategories=Network;WebBrowser;\nStartupWMClass=LinkonBrowser\n' \
+            > "$DEB/usr/share/applications/linkon.desktop"
+
+          # Install icons
+          cp "skin/chrome/linkon-128.png" "$DEB/usr/share/icons/hicolor/128x128/apps/linkon.png"
+          cp "skin/chrome/linkon-256.png" "$DEB/usr/share/icons/hicolor/256x256/apps/linkon.png"
+          cp "skin/chrome/linkon-128.png" "$DEB/usr/share/pixmaps/linkon.png"
+
+          printf 'Package: linkon-browser\nVersion: %s\nSection: web\nPriority: optional\nArchitecture: amd64\nMaintainer: TeraBites <hello@terabytes.dev>\nDescription: Linkon Browser\n A developer OS inside a browser. Free. Open-source. MPL 2.0.\nDepends: libgtk-3-0, libdbus-glib-1-2\n' \
+            "$V" > "$DEB/DEBIAN/control"
+
           fakeroot dpkg-deb --build "$DEB" "dist/Linkon-$V-amd64.deb"
-          echo "DEB built: $(du -sh dist/Linkon-$V-amd64.deb | cut -f1)"
+          echo "DEB: $(du -sh dist/Linkon-$V-amd64.deb | cut -f1)"
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
@@ -435,7 +558,7 @@ jobs:
             ### Five Pillars
             - Infinite Tabs (Freeze + HAW)
             - Offline AI Copilot (Ollama + CodeLlama)
-            - S Gallery (Docker sandboxes, TB)
+            - S Gallery (Docker sandboxes, TB™)
             - Linkon Agents (OpenHands)
             - Linkon Universe (TeraBites + HF storage)
 
