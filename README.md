@@ -3,22 +3,24 @@
 > **A developer's operating system inside a browser.**  
 > Free. Open-source. No accounts required. No charges. Ever.
 
-### ⬇️ Download
+---
 
-| Platform | File | |
+## ⬇️ Download Executables
+
+| Platform | File | Link |
 |---|---|---|
-| 🪟 Windows | `LinkonSetup-1.0.0.exe` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/LinkonSetup-1.0.0.exe) |
-| 🍎 macOS | `Linkon-1.0.0.dmg` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.dmg) |
-| 🐧 Linux | `Linkon-1.0.0.AppImage` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.AppImage) |
-| 🐧 Linux | `Linkon-1.0.0.deb` | [Download →](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.deb) |
+| 🪟 **Windows** | `LinkonSetup-1.0.0.exe` | [**Download .exe**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/LinkonSetup-1.0.0.exe) |
+| 🍎 **macOS** | `Linkon-1.0.0.dmg` | [**Download .dmg**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.dmg) |
+| 🐧 **Linux** | `Linkon-1.0.0-x86_64.AppImage` | [**Download .AppImage**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0-x86_64.AppImage) |
+| 🐧 **Linux** | `Linkon-1.0.0-amd64.deb` | [**Download .deb**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0-amd64.deb) |
 
-> All builds are also available under [**Actions → Artifacts**](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml) if you don't see a release yet.
+> **No release yet?** Grab the latest build directly from [Actions → Artifacts](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml) — click the most recent passing run and scroll to **Artifacts** at the bottom.
 
 ---
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
-[![Build Linkon All Platforms](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml)
-[![Powered by Firefox ESR](https://img.shields.io/badge/Engine-Firefox_ESR-orange)](https://www.mozilla.org/en-US/firefox/enterprise/)
+[![Build Status](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml)
+[![Engine: Firefox ESR](https://img.shields.io/badge/Engine-Firefox_ESR-orange)](https://www.mozilla.org/en-US/firefox/enterprise/)
 [![Search: Stract](https://img.shields.io/badge/Search-Stract_(self--hosted)-blueviolet)](https://stract.com)
 
 ---
@@ -88,10 +90,13 @@ Linkon Browser
 └── Skin            userChrome.css — cosmic UI
 ```
 
+---
+
 ## Quick Start
 
 ### Option A — Download a build
-Grab the binary for your platform from the [**Download**](#️-download) section above or the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
+See the [**Download**](#️-download-executables) table above.  
+Once a tagged release exists, installers are also on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
 
 ### Option B — Build from source
 
@@ -100,7 +105,8 @@ git clone https://github.com/OnyxNeol/linkon-browser
 cd linkon-browser
 ```
 
-Push a version tag to trigger all three builds automatically:
+Push a version tag to trigger all three builds and create a release automatically:
+
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
@@ -114,7 +120,7 @@ Artifacts appear under **Actions → Build Linkon All Platforms → Artifacts**.
 docker-compose up -d
 ```
 
-This starts:
+Starts:
 - **Stract** — self-hosted search at `localhost:3000`
 - **OpenHands** — AI agent dashboard at `localhost:3001`
 - **S Gallery** sandbox manager at `localhost:3002`
