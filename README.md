@@ -5,16 +5,17 @@
 
 ---
 
-## ⬇️ Download Executables
+## ⬇️ Download
 
-| Platform | File | Link |
+| Platform | File | Status |
 |---|---|---|
-| 🪟 **Windows** | `LinkonSetup-1.0.0.exe` | [**Download .exe**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/LinkonSetup-1.0.0.exe) |
-| 🍎 **macOS** | `Linkon-1.0.0.dmg` | [**Download .dmg**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0.dmg) |
-| 🐧 **Linux** | `Linkon-1.0.0-x86_64.AppImage` | [**Download .AppImage**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0-x86_64.AppImage) |
-| 🐧 **Linux** | `Linkon-1.0.0-amd64.deb` | [**Download .deb**](https://github.com/OnyxNeol/linkon-browser/releases/latest/download/Linkon-1.0.0-amd64.deb) |
+| 🪟 **Windows** | [LinkonSetup-1.0.0.exe](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/LinkonSetup-1.0.0.exe) | ✅ Ready |
+| 🍎 **macOS** | [Linkon-1.0.0.dmg](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/Linkon-1.0.0.dmg) | 🔄 Building… |
+| 🐧 **Linux AppImage** | [Linkon-1.0.0-x86_64.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/Linkon-1.0.0-x86_64.AppImage) | 🔄 Building… |
+| 🐧 **Linux DEB** | [Linkon-1.0.0-amd64.deb](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/Linkon-1.0.0-amd64.deb) | 🔄 Building… |
 
-> **No release yet?** Grab the latest build directly from [Actions → Artifacts](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml) — click the most recent passing run and scroll to **Artifacts** at the bottom.
+> macOS and Linux builds complete automatically. Links will go live within ~20 min.  
+> All files also listed on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases/tag/v1.0.0).
 
 ---
 
@@ -95,24 +96,18 @@ Linkon Browser
 ## Quick Start
 
 ### Option A — Download a build
-See the [**Download**](#️-download-executables) table above.  
-Once a tagged release exists, installers are also on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
+See the [Download](#️-download) table above. Windows is ready now. macOS and Linux complete automatically.
 
 ### Option B — Build from source
 
 ```bash
 git clone https://github.com/OnyxNeol/linkon-browser
 cd linkon-browser
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
-Push a version tag to trigger all three builds and create a release automatically:
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-Artifacts appear under **Actions → Build Linkon All Platforms → Artifacts**.
+Triggers all three platform builds automatically and creates a new GitHub Release.
 
 ### Option C — Run the backend locally
 
