@@ -195,7 +195,8 @@ function renderTopNav() {
   if (!nav) return;
   nav.innerHTML = `
     <div class="nav-logo">
-      <span class="logo-hex">⬡</span>
+      <img src="https://base44.app/api/apps/6a22ad5e307574a9f51fd903/files/mp/public/6a22ad5e307574a9f51fd903/c75f9f987_linkon-logo.png"
+           alt="Linkon" class="nav-logo-img" />
       <span class="logo-text">Linkon</span>
       <span class="logo-version">${LINKON_VERSION}</span>
     </div>

@@ -43,26 +43,69 @@ html, body {
 #login-screen {
   position: fixed; inset: 0; z-index: 100;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at center, #1a003588 0%, #08000f 70%);
+}
+
+/* Full-bleed wizard background */
+.login-bg {
+  position: absolute; inset: 0;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  /* Dark cosmic overlay on top of the image */
+  filter: brightness(0.55) saturate(1.3);
+}
+
+/* Radial vignette overlay */
+#login-screen::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 1;
+  background: radial-gradient(ellipse at center,
+    transparent 20%,
+    #08000fbb 80%,
+    #08000fff 100%
+  );
+  pointer-events: none;
 }
 
 .login-card {
-  background: linear-gradient(160deg, #1a003599, #0d001e99);
+  position: relative; z-index: 2;
+  background: linear-gradient(160deg, #1a003599, #0d001ecc);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 2.5rem 2rem;
-  width: 360px;
-  backdrop-filter: blur(18px);
-  box-shadow: 0 0 80px #6e00ff33, 0 0 20px #00000088;
+  width: 380px;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 100px #6e00ff44,
+    0 0 30px #00000099,
+    inset 0 1px 0 #ffffff0a;
   display: flex; flex-direction: column; gap: 1.4rem;
 }
 
 .login-logo {
   text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
 }
+
+/* Real logo image */
+.login-logo-img {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  border-radius: 22px;
+  /* Soft cosmic glow around the logo */
+  filter: drop-shadow(0 0 18px #6e00ffaa) drop-shadow(0 0 6px #00d4ff66);
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { filter: drop-shadow(0 0 18px #6e00ffaa) drop-shadow(0 0 6px #00d4ff66); }
+  50%       { filter: drop-shadow(0 0 30px #9b4dffcc) drop-shadow(0 0 12px #00d4ffaa); }
+}
+
 .hex-large { font-size: 3rem; color: var(--violet); }
-.login-logo h1 { font-size: 2rem; font-weight: 800; color: var(--text); letter-spacing: 0.08em; }
-.login-tagline { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; }
+.login-tagline { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.1rem; letter-spacing: 0.04em; }
 
 .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
 .form-group label { font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.05em; }
@@ -120,6 +163,11 @@ html, body {
   backdrop-filter: blur(12px);
 }
 .nav-logo { display: flex; align-items: center; gap: 0.4rem; }
+.nav-logo-img {
+  width: 28px; height: 28px;
+  object-fit: contain; border-radius: 6px;
+  filter: drop-shadow(0 0 6px #6e00ffaa);
+}
 .logo-hex { font-size: 1.4rem; color: var(--violet); }
 .logo-text { font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em; }
 .logo-version { font-size: 0.65rem; color: var(--text-muted); align-self: flex-end; margin-bottom: 2px; }
