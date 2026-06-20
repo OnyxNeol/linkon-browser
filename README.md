@@ -80,15 +80,15 @@ Auto-creates a Hugging Face org: `(YourName)-Linkon-Universe`.
 
 ```
 Linkon Browser
-├── Engine          Firefox ESR (Gecko)
+├── Engine          Electron + Blink
 ├── Search          Stract (self-hosted, no Google)
 ├── AI Agent        OpenHands (local Docker)
 ├── AI Model        Ollama + CodeLlama (offline)
 ├── Sandboxes       Docker → ttyd / Jupyter (browser tabs)
 ├── Storage         Hugging Face Repos + Datasets API
-├── Auth            TeraBites (Linkon Pass)
-├── Extension       Linkon Core (.xpi) — injected at build
-└── Skin            userChrome.css — cosmic UI
+├── Auth            GitHub OAuth + Hugging Face OAuth
+├── App             linkon-electron/ (Electron, Node.js)
+└── Skin            Cosmic UI (custom CSS)
 ```
 
 ---
@@ -96,18 +96,18 @@ Linkon Browser
 ## Quick Start
 
 ### Option A — Download a build
-See the [Download](#️-download) table above. Windows is ready now. macOS and Linux complete automatically.
+See the [Download](#️-download) table above. All platforms build via GitHub Actions (Electron + Blink).
 
 ### Option B — Build from source
 
 ```bash
 git clone https://github.com/OnyxNeol/linkon-browser
-cd linkon-browser
-git tag v1.1.0
-git push origin v1.1.0
+cd linkon-browser/linkon-electron
+npm install
+npm run build:win    # Windows .exe
+npm run build:mac    # macOS .dmg
+npm run build:linux  # Linux .AppImage + .deb
 ```
-
-Triggers all three platform builds automatically and creates a new GitHub Release.
 
 ### Option C — Run the backend locally
 
@@ -126,10 +126,16 @@ Starts:
 
 ```
 linkon-browser/
+├── linkon-electron/         # Electron + Blink app (current engine)
+│   ├── src/
+│   │   ├── main.js          # Main process (Blink, OAuth, Stract)
+│   │   └── renderer/        # Cosmic UI
+│   └── package.json
 ├── .github/workflows/
-│   └── build-all.yml        # Windows + macOS + Linux CI
+│   └── build-electron.yml   # Windows + macOS + Linux CI (Electron + Blink)
+│   └── build-all.yml        # Legacy Firefox ESR CI
 ├── browser-config/
-│   ├── policies.json        # Firefox enterprise policies
+│   ├── policies.json        # Enterprise policies
 │   └── linkon.cfg           # AutoConfig (disables telemetry)
 ├── extension/
 │   ├── manifest/manifest.json
@@ -165,7 +171,7 @@ All contributions welcome. This is a community project.
 **Mozilla Public License 2.0**  
 See [LICENSE](LICENSE) for full text.
 
-Linkon is built on Firefox ESR (MPL 2.0), Stract (MIT), and OpenHands (MIT).  
+Linkon is built on Electron (MIT), Stract (MIT), and OpenHands (MIT).  
 The Linkon name, cosmic UI, and S Gallery™ branding are by **TeraBites™**.
 
 ---
