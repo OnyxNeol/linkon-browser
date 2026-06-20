@@ -15,7 +15,7 @@
 | 🐧 **Linux DEB** | [Linkon-1.0.1.deb](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
 
 > **v1.0.1** — Electron + Blink engine.  
-> All downloads also on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
+> Previous version? See [v1.0.0 (legacy)](https://github.com/OnyxNeol/linkon-browser/releases/tag/v1.0.0).
 
 ---
 
