@@ -5,22 +5,22 @@
 
 ---
 
-## ⬇️ Download
+## ⬇️ Download v1.0.1
 
-| Platform | File | Status |
-|---|---|---|
-| 🪟 **Windows** | [LinkonSetup-1.0.1.exe](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
-| 🍎 **macOS** | [Linkon-1.0.1.dmg](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
-| 🐧 **Linux AppImage** | [Linkon-1.0.1-x86_64.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
-| 🐧 **Linux DEB** | [Linkon-1.0.1-amd64.deb](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
+| Platform | Download |
+|---|---|
+| 🪟 **Windows** | [LinkonSetup-1.0.1.exe](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
+| 🍎 **macOS** | [Linkon-1.0.1.dmg](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
+| 🐧 **Linux AppImage** | [Linkon-1.0.1.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
+| 🐧 **Linux DEB** | [Linkon-1.0.1.deb](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
 
-> v1.0.1: Electron + Blink engine — full rebuild. Links go live when CI completes.  
-> All files also listed on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
+> **v1.0.1** — Electron + Blink engine.  
+> All downloads also on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
 
 ---
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
-[![Build Status](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml)
+[![Build](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml)
 [![Engine: Electron + Blink](https://img.shields.io/badge/Engine-Electron_+_Blink-blue)](https://www.electronjs.org/)
 [![Search: Stract](https://img.shields.io/badge/Search-Stract_(self--hosted)-blueviolet)](https://stract.com)
 
@@ -96,7 +96,7 @@ Linkon Browser
 ## Quick Start
 
 ### Option A — Download a build
-See the [Download](#️-download) table above. All platforms build via GitHub Actions (Electron + Blink).
+See the [Download](#️-download-v101) table above.
 
 ### Option B — Build from source
 
@@ -132,8 +132,8 @@ linkon-browser/
 │   │   └── renderer/        # Cosmic UI
 │   └── package.json
 ├── .github/workflows/
-│   └── build-electron.yml   # Windows + macOS + Linux CI (Electron + Blink)
-│   └── build-all.yml        # Legacy Firefox ESR CI
+│   ├── build-electron.yml   # Windows + macOS + Linux CI (Electron + Blink)
+│   └── build-all.yml        # Legacy (v1.0.0 / Firefox ESR)
 ├── browser-config/
 │   ├── policies.json        # Enterprise policies
 │   └── linkon.cfg           # AutoConfig (disables telemetry)
@@ -153,6 +153,22 @@ linkon-browser/
 │   └── stract.toml
 └── docker-compose.yml       # Stract + OpenHands + S Gallery
 ```
+
+---
+
+## Version History
+
+### v1.0.1 — Electron + Blink (current)
+- **Engine**: Migrated from Firefox ESR to **Electron + Blink**
+- New GitHub Actions CI for all platforms
+- GitHub OAuth + Hugging Face OAuth login
+- Stract search integration (self-hosted)
+- S Gallery™ sandbox manager
+
+### v1.0.0 — Firefox ESR (legacy)
+- Original Firefox ESR-based build
+- **Deprecated** — no active development
+- Legacy assets still available on the [v1.0.0 release](https://github.com/OnyxNeol/linkon-browser/releases/tag/v1.0.0)
 
 ---
 
