@@ -9,19 +9,19 @@
 
 | Platform | File | Status |
 |---|---|---|
-| 🪟 **Windows** | [LinkonSetup-1.0.0.exe](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/LinkonSetup-1.0.0.exe) | ✅ Ready |
-| 🍎 **macOS** | [Linkon-1.0.0.dmg](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/Linkon-1.0.0.dmg) | 🔄 Building… |
-| 🐧 **Linux AppImage** | [Linkon-1.0.0-x86_64.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/Linkon-1.0.0-x86_64.AppImage) | 🔄 Building… |
-| 🐧 **Linux DEB** | [Linkon-1.0.0-amd64.deb](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.0/Linkon-1.0.0-amd64.deb) | 🔄 Building… |
+| 🪟 **Windows** | [LinkonSetup-1.0.1.exe](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
+| 🍎 **macOS** | [Linkon-1.0.1.dmg](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
+| 🐧 **Linux AppImage** | [Linkon-1.0.1-x86_64.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
+| 🐧 **Linux DEB** | [Linkon-1.0.1-amd64.deb](https://github.com/OnyxNeol/linkon-browser/releases/latest) | 🔄 Building… |
 
-> macOS and Linux builds complete automatically. Links will go live within ~20 min.  
-> All files also listed on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases/tag/v1.0.0).
+> v1.0.1: Electron + Blink engine — full rebuild. Links go live when CI completes.  
+> All files also listed on the [Releases page](https://github.com/OnyxNeol/linkon-browser/releases).
 
 ---
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
-[![Build Status](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-all.yml)
-[![Engine: Firefox ESR](https://img.shields.io/badge/Engine-Firefox_ESR-orange)](https://www.mozilla.org/en-US/firefox/enterprise/)
+[![Build Status](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml)
+[![Engine: Electron + Blink](https://img.shields.io/badge/Engine-Electron_+_Blink-blue)](https://www.electronjs.org/)
 [![Search: Stract](https://img.shields.io/badge/Search-Stract_(self--hosted)-blueviolet)](https://stract.com)
 
 ---
