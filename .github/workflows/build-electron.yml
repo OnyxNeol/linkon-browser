@@ -1,58 +1,11 @@
 name: Build Linkon Electron App
 
 on:
-  push:
-    branches: [main]
-    tags: ["v*"]
   workflow_dispatch:
 
-env:
-  VERSION: "1.0.1"
-
 jobs:
-
-  build-windows:
-    name: Windows EXE (Electron + Blink)
-    runs-on: windows-latest
-    defaults:
-      run:
-        working-directory: linkon-electron
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: npm install
-      - run: npm run build:win
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Linkon-Windows-v1.0.1
-          path: linkon-electron/dist/*.exe
-          retention-days: 30
-
-  build-macos:
-    name: macOS DMG (Electron + Blink)
-    runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: linkon-electron
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: npm install
-      - run: npm run build:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Linkon-macOS-v1.0.1
-          path: linkon-electron/dist/*.dmg
-          retention-days: 30
-
   build-linux:
-    name: Linux AppImage + DEB (Electron + Blink)
+    name: Linux AppImage + DEB
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -60,15 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: sudo apt-get install -y --no-install-recommends libarchive-tools
+        with:
+          node-version: '20'
+      - run: sudo apt-get install -y libarchive-tools
       - run: npm install
-      - run: npm run build:linux
+      - run: npx electron-builder --linux --x64
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
-          name: Linkon-Linux-v1.0.1
+          name: Linkon-Linux-Electron
           path: |
             linkon-electron/dist/*.AppImage
             linkon-electron/dist/*.deb
