@@ -41,14 +41,14 @@
     },
     "mac": {
       "target": [{ "target": "dmg", "arch": ["x64"] }],
-      "icon": "assets/linkon.icns",
+      "icon": "assets/linkon-512.png",
       "category": "public.app-category.browsers",
-      "bundleVersion": "1.0.0",
+      "bundleVersion": "1.0.1",
       "minimumSystemVersion": "10.15"
     },
     "dmg": {
       "title": "Linkon Browser",
-      "icon": "assets/linkon.icns"
+      "icon": "assets/linkon-512.png"
     },
     "linux": {
       "target": ["AppImage", "deb"],
