@@ -1,102 +1,55 @@
-# ⬡ Linkon Browser
+# ⬡ Linkon
 
-> **A developer's operating system inside a browser.**  
+> **A developer's operating system inside a browser — the foundation is here, the universe is coming.**  
 > Free. Open-source. No accounts required. No charges. Ever.
 
 ---
 
-## ⬇️ Download v1.0.1
+## ⬇️ Download v1.0.2
 
 | Platform | Download |
 |---|---|
-| 🪟 **Windows** | [Linkon.Browser.Setup.1.0.1.exe](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/Linkon.Browser.Setup.1.0.1.exe) |
-| 🍎 **macOS** | [Linkon.Browser-1.0.1.dmg](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/Linkon.Browser-1.0.1.dmg) |
-| 🐧 **Linux AppImage** | [Linkon.Browser-1.0.1.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/Linkon.Browser-1.0.1.AppImage) |
-| 🐧 **Linux DEB** | [linkon-browser_1.0.1_amd64.deb](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/linkon-browser_1.0.1_amd64.deb) |
-
-> **v1.0.1** — Electron + Blink engine.  
-> Previous version? See [v1.0.0 (legacy)](https://github.com/OnyxNeol/linkon-browser/releases/tag/v1.0.0).
+| 🪟 **Windows** | [Linkon.Setup.1.0.2.exe](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.2/Linkon.Browser.Setup.1.0.1.exe) |
+| 🍎 **macOS** | [Linkon-1.0.2.dmg](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.2/Linkon.Browser-1.0.1.dmg) |
+| 🐧 **Linux AppImage** | [Linkon-1.0.2.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.2/Linkon.Browser-1.0.1.AppImage) |
+| 🐧 **Linux DEB** | [linkon_1.0.2_amd64.deb](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.2/linkon-browser_1.0.1_amd64.deb) |
 
 ---
 
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Build](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml/badge.svg)](https://github.com/OnyxNeol/linkon-browser/actions/workflows/build-electron.yml)
 [![Engine: Electron + Blink](https://img.shields.io/badge/Engine-Electron_+_Blink-blue)](https://www.electronjs.org/)
-[![Search: Stract](https://img.shields.io/badge/Search-Stract_(self--hosted)-blueviolet)](https://stract.com)
 
 ---
 
-## ✦ Free & Open-Source — Always
+## ✦ What Linkon Is
 
-Linkon is **100% free**. Every feature, every service, every pillar — free forever.
+Linkon is an **ambitious, free, open-source platform** being built in layers. The kernel is ready. The rest is unfolding.
 
-| Feature | Cost |
-|---|---|
-| Linkon Browser | Free |
-| Linkon Agents | Free |
-| Linkon Universe | Free |
-| S Gallery™ Sandboxes | Free |
-| Infinite Tabs | Free |
-| Offline AI Copilot | Free |
-| All future features | Free |
+**What ships today (v1.0.2)**:
+- **Electron + Blink engine** — a clean, fast browser with zero Google/Chromium telemetry
+- **Tabbed browsing** — with a cosmic dark UI
+- **GitHub OAuth + Hugging Face OAuth** — log in with your dev accounts
+- **Google-free** — all telemetry endpoints blocked at the network level
+- **Cosmic UI shell** — the visual foundation for everything to come
 
-No subscriptions. No premium tiers. No telemetry. No ads.  
-Licensed under **MPL 2.0** — fork it, build on it, make it yours.
+**What's on the roadmap (the Five Pillars)**:
+1. **Infinite Tabs** (Freeze Mode + HAW) — open 500 tabs, freeze them to near-zero resource usage
+2. **Offline AI Copilot** — local AI via Ollama + CodeLlama, works on a plane
+3. **S Gallery™ Sandboxes** — spin up Python, Node, Rust sandboxes from a browser tab
+4. **Linkon Agents** — AI agents that orchestrate workflows directly in the browser
+5. **Linkon Universe** — your personal dev hub with galaxies, workspaces, and instant drops
 
----
+All features, present and future, are **100% free**. No subscriptions. No premium tiers. No telemetry. No ads.
 
-## Five Pillars
-
-### ❄️ 1. Infinite Tabs (Freeze Mode + HAW)
-Freeze tabs to near-zero resource usage while keeping sessions, cookies, and auth alive.  
-Half Active Website (HAW) mode polls just enough to stay verified — open 500 tabs without crashing.
-
-### 🧠 2. Offline AI Copilot
-A local AI assistant powered by [Ollama](https://ollama.ai) + CodeLlama.  
-Zero cloud. Works on a plane. Helps you code, debug, and automate — privately.
-
-### ⚗️ 3. S Gallery™ *(TB™)*
-The compute hub. Spin up sandboxes instantly — Python, Node, Rust, Linux, custom.  
-Sandboxes open as browser tabs via `ttyd` (terminal) or Jupyter (notebooks).  
-Agents live here. Powered by local Docker. Branded as mythic by TeraBites™.
-
-### 🤖 4. Linkon Agents + Extensions
-Agents orchestrate workflows directly inside the browser.  
-Built-in integrations: **GitHub**, **Hugging Face**, **Kaggle** — native, not scattered tabs.  
-Powered by [OpenHands](https://github.com/All-Hands-AI/OpenHands).
-
-### 🌌 5. Linkon Universe
-Login with **Linkon Pass** via TeraBites auth.  
-Auto-creates a Hugging Face org: `(YourName)-Linkon-Universe`.  
-- **Workspace** — your central hub (renameable)  
-- **Galaxies** — folders for projects, datasets, bookmarks, notes  
-- **Immediate Drop** — store anything instantly, organize later  
-
-*Compute stays in S Gallery. Storage lives in the Universe. Clean separation.*
-
----
-
-## Architecture
-
-```
-Linkon Browser
-├── Engine          Electron + Blink
-├── Search          Stract (self-hosted, no Google)
-├── AI Agent        OpenHands (local Docker)
-├── AI Model        Ollama + CodeLlama (offline)
-├── Sandboxes       Docker → ttyd / Jupyter (browser tabs)
-├── Storage         Hugging Face Repos + Datasets API
-├── Auth            GitHub OAuth + Hugging Face OAuth
-├── App             linkon-electron/ (Electron, Node.js)
-└── Skin            Cosmic UI (custom CSS)
-```
+> Licensed under **MPL 2.0** — fork it, build on it, make it yours.
 
 ---
 
 ## Quick Start
 
 ### Option A — Download a build
-See the [Download](#️-download-v101) table above.
+See the [Download](#️-download-v102) table above.
 
 ### Option B — Build from source
 
@@ -122,33 +75,40 @@ Starts:
 
 ---
 
+## Architecture
+
+```
+Linkon
+├── Engine          Electron + Blink ✓ (v1.0.2)
+├── Tabs            Cosmic UI shell   ✓ (v1.0.2)
+├── Auth            GitHub + HF OAuth ✓ (v1.0.2)
+├── Search          Stract / DuckDuckGo ✓ (v1.0.2)
+├── AI Copilot      Ollama + CodeLlama (roadmap)
+├── Sandboxes       Docker → ttyd/Jupyter (roadmap)
+├── Agents          OpenHands runtime (roadmap)
+├── Universe        Workspace hub (roadmap)
+└── Skin            Cosmic UI (custom CSS)
+```
+
+---
+
 ## Project Structure
 
 ```
 linkon-browser/
-├── linkon-electron/         # Electron + Blink app (current engine)
+├── linkon-electron/         # Electron + Blink app
 │   ├── src/
-│   │   ├── main.js          # Main process (Blink, OAuth, Stract)
+│   │   ├── main.js          # Main process (Blink, OAuth, tabs)
 │   │   └── renderer/        # Cosmic UI
 │   └── package.json
 ├── .github/workflows/
-│   ├── build-electron.yml   # Windows + macOS + Linux CI (Electron + Blink)
+│   ├── build-electron.yml   # CI: Windows + macOS + Linux
 │   └── build-all.yml        # Legacy (v1.0.0 / Firefox ESR)
-├── browser-config/
-│   ├── policies.json        # Enterprise policies
-│   └── linkon.cfg           # AutoConfig (disables telemetry)
 ├── extension/
-│   ├── manifest/manifest.json
-│   └── src/
-│       ├── background.js
-│       ├── tabs/            # Infinite Tabs + HAW
-│       ├── sgallery/        # S Gallery sandbox manager
-│       ├── agents/          # Linkon Agents runtime
-│       ├── universe/        # Universe dashboard
-│       └── search/          # Stract search router
-├── skin/chrome/
-│   ├── userChrome.css       # Cosmic UI skin
-│   └── userContent.css
+│   └── src/                 # Future: agent runtime, sandbox UI
+├── browser-config/
+│   ├── policies.json
+│   └── linkon.cfg
 ├── stract-config/
 │   └── stract.toml
 └── docker-compose.yml       # Stract + OpenHands + S Gallery
@@ -158,17 +118,18 @@ linkon-browser/
 
 ## Version History
 
-### v1.0.1 — Electron + Blink (current)
-- **Engine**: Migrated from Firefox ESR to **Electron + Blink**
-- New GitHub Actions CI for all platforms
-- GitHub OAuth + Hugging Face OAuth login
-- Stract search integration (self-hosted)
-- S Gallery™ sandbox manager
+### v1.0.2 — Electron + Blink (current)
+- Clean release — Electron 31 + Blink engine
+- Tabbed browsing with cosmic UI
+- GitHub OAuth + Hugging Face OAuth
+- Google/Chromium telemetry blocked
+
+### v1.0.1 — skipped
+- CI release issues, use v1.0.2 instead
 
 ### v1.0.0 — Firefox ESR (legacy)
 - Original Firefox ESR-based build
 - **Deprecated** — no active development
-- Legacy assets still available on the [v1.0.0 release](https://github.com/OnyxNeol/linkon-browser/releases/tag/v1.0.0)
 
 ---
 
