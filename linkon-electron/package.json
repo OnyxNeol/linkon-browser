@@ -4,6 +4,10 @@
   "version": "1.0.1",
   "description": "A developer OS inside a browser. Free. Open-source. MPL 2.0.",
   "homepage": "https://github.com/OnyxNeol/linkon-browser",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OnyxNeol/linkon-browser.git"
+  },
   "author": { "name": "TeraBites", "email": "linkon@terabytes.dev" },
   "license": "MPL-2.0",
   "main": "src/main.js",
