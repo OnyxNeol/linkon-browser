@@ -4,24 +4,18 @@
 > Free. Open-source. No accounts required. No charges. Ever.
 
 ---
-## ⬇️ Download v1.0.1 (latest)
+
+## ⬇️ Download v1.0.1
 
 | Platform | Download |
 |---|---|
-| 🪟 **Windows** | [LinkonSetup-1.0.1.exe](Linkon.Browser.Setup.1.0.1.exe) |
-| 🍎 **macOS** | [Linkon-1.0.1.dmg](Linkon.Browser-1.0.1.dmg) |
-| 🐧 **Linux AppImage** | [Linkon-1.0.1.AppImage](Linkon.Browser-1.0.1.AppImage) |
-| 🐧 **Linux DEB** | [Linkon-1.0.1.deb](linkon-browser_1.0.1_amd64.deb) |
+| 🪟 **Windows** | [Linkon.Browser.Setup.1.0.1.exe](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/Linkon.Browser.Setup.1.0.1.exe) |
+| 🍎 **macOS** | [Linkon.Browser-1.0.1.dmg](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/Linkon.Browser-1.0.1.dmg) |
+| 🐧 **Linux AppImage** | [Linkon.Browser-1.0.1.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/Linkon.Browser-1.0.1.AppImage) |
+| 🐧 **Linux DEB** | [linkon-browser_1.0.1_amd64.deb](https://github.com/OnyxNeol/linkon-browser/releases/download/v1.0.1/linkon-browser_1.0.1_amd64.deb) |
 
-
-## ⬇️ Download v1.0.0 (old)
-
-| Platform | Download |
-|---|---|
-| 🪟 **Windows** | [LinkonSetup-1.0.1.exe](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
-| 🍎 **macOS** | [Linkon-1.0.1.dmg](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
-| 🐧 **Linux AppImage** | [Linkon-1.0.1.AppImage](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
-| 🐧 **Linux DEB** | [Linkon-1.0.1.deb](https://github.com/OnyxNeol/linkon-browser/releases/latest) |
+> **v1.0.1** — Electron + Blink engine.  
+> Previous version? See [v1.0.0 (legacy)](https://github.com/OnyxNeol/linkon-browser/releases/tag/v1.0.0).
 
 ---
 
