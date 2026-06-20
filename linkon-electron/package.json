@@ -1,9 +1,10 @@
 {
   "name": "linkon-browser",
   "productName": "Linkon Browser",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A developer OS inside a browser. Free. Open-source. MPL 2.0.",
-  "author": "TeraBites",
+  "homepage": "https://github.com/OnyxNeol/linkon-browser",
+  "author": { "name": "TeraBites", "email": "linkon@terabytes.dev" },
   "license": "MPL-2.0",
   "main": "src/main.js",
   "scripts": {
@@ -50,6 +51,7 @@
       "icon": "assets/linkon-256.png",
       "category": "Network;WebBrowser",
       "executableName": "linkon",
+      "maintainer": "TeraBites <linkon@terabytes.dev>",
       "desktop": {
         "StartupWMClass": "LinkonBrowser"
       }
